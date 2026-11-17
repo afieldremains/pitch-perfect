@@ -11,9 +11,9 @@ It also keeps your clients, follow-ups and notes on your own computer.
 
 ## Download
 
-**[Download PRIME: Pitch Perfect for Windows](https://github.com/afieldremains/pitch-perfect/raw/main/PRIME-Pitch-Perfect-Setup.exe)** (version 0.28.1, about 100 MB)
+**[Download PRIME: Pitch Perfect for Windows](https://github.com/afieldremains/pitch-perfect/raw/main/PRIME-Pitch-Perfect-Setup.exe)** (version 0.29.0, about 100 MB)
 
-The download starts as soon as you click. SHA-256: `ff6fd75b0be664c648ee4004cae4a7f640897f405538f34061afbcad9942ac5c`
+The download starts as soon as you click. SHA-256: `e428481b592ef9a327959783021c13612d390c28d1c8c84ac8b599902e76cbdd`
 
 ## Install
 
