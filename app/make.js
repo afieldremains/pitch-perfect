@@ -1,4 +1,4 @@
-// PRIME: PITCH PERFECT, Ads and Brand kits. Each page has a short form, a log while it is being made, and the ones
+// Vereza, Ads and Brand kits. Each page has a short form, a log while it is being made, and the ones
 // made before: a campaign shows its ad images and opens its board, PDF and copy; a brand kit shows its logo
 // directions and opens its guide, and can put its colors, tagline and voice into the company in use.
 // Uses app.js helpers: S, el, pages, view, toast, route.

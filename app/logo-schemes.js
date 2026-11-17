@@ -1,12 +1,12 @@
-// The Prime logo palettes, taken from the logo catalog: each is a background, the P's stem and ring, its star and the
+// The Vereza logo palettes, taken from the logo catalog: each is a background, the P's stem and ring, its star and the
 // wordmark. Shuffle can roll them and Settings shows each as its logo; the guide and the marks in the app wear them.
-const LOGO_SCHEMES = [{"id":"yellow","name":"Prime Yellow","bg":"#F9C801","stem":"#2454D8","ring":"#DE241E","star":"#FCFCFC","word":"#121218"},
+const LOGO_SCHEMES = [{"id":"yellow","name":"Vereza Yellow","bg":"#F9C801","stem":"#2454D8","ring":"#DE241E","star":"#FCFCFC","word":"#121218"},
   {"id":"cream","name":"Cream","bg":"#FBF8F3","stem":"#2454D8","ring":"#DE241E","star":"#FCFCFC","word":"#121218"},
   {"id":"white","name":"Clean White","bg":"#FFFFFF","stem":"#2454D8","ring":"#DE241E","star":"#F6C600","word":"#121230"},
   {"id":"navy","name":"Navy","bg":"#151634","stem":"#426CFC","ring":"#FC5A4E","star":"#FCFCFC","word":"#FCFCFC"},
   {"id":"black","name":"Black","bg":"#131218","stem":"#426CFC","ring":"#FC423C","star":"#F6C600","word":"#FCFCFC"},
-  {"id":"red","name":"Prime Red","bg":"#E22722","stem":"#FCFCFC","ring":"#F6C600","star":"#DE2424","word":"#FCFCFC"},
-  {"id":"blue","name":"Prime Blue","bg":"#2657DA","stem":"#F6C600","ring":"#FCFCFC","star":"#2454D8","word":"#FCFCFC"},
+  {"id":"red","name":"Vereza Red","bg":"#E22722","stem":"#FCFCFC","ring":"#F6C600","star":"#DE2424","word":"#FCFCFC"},
+  {"id":"blue","name":"Vereza Blue","bg":"#2657DA","stem":"#F6C600","ring":"#FCFCFC","star":"#2454D8","word":"#FCFCFC"},
   {"id":"coral","name":"Coral","bg":"#FF7055","stem":"#121230","ring":"#FCFCFC","star":"#FC6C4E","word":"#181230"},
   {"id":"mint","name":"Mint","bg":"#D6F1E2","stem":"#1E4278","ring":"#189C6C","star":"#FCFCFC","word":"#123024"},
   {"id":"lilac","name":"Lilac","bg":"#EBE2FF","stem":"#5A3CD8","ring":"#FC609C","star":"#FCFCFC","word":"#24125A"},

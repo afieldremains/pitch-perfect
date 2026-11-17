@@ -1,4 +1,4 @@
-// PRIME: PITCH PERFECT, the window. Everything that touches the computer goes through window.studio (preload.js).
+// Vereza, the window. Everything that touches the computer goes through window.studio (preload.js).
 'use strict';
 
 const S = window.studio;
@@ -10,9 +10,9 @@ const store = {
 };
 
 // ---------- appearance: theme, accent and motion, chosen in Settings and remembered on this computer ----------
-// Three modes: Light (black and white; only the Prime mark and the decks keep their color), Dark (the original
-// Prime look) and Shuffle (a new color scheme every roll, named, always readable).
-const THEMES = [['warm', 'Notebook', 'A composition notebook: marbled cover, dot-grid pages that turn, the three Prime inks'], ['light', 'Light', 'Black on white. Only Prime and the decks in color'], ['black', 'Black', 'White on true black. Only Prime and the decks in color'], ['dark', 'Dark', 'Prime at night: deep navy, no white'], ['shuffle', 'Shuffle', 'A new color scheme every roll'], ['custom', 'Custom', 'Your own colors, or one of 48 ready-made themes']];
+// Three modes: Light (black and white; only the Vereza mark and the decks keep their color), Dark (the original
+// Vereza look) and Shuffle (a new color scheme every roll, named, always readable).
+const THEMES = [['warm', 'Notebook', 'A composition notebook: marbled cover, dot-grid pages that turn, the three Vereza inks'], ['light', 'Light', 'Black on white. Only Vereza and the decks in color'], ['black', 'Black', 'White on true black. Only Vereza and the decks in color'], ['dark', 'Dark', 'Vereza at night: deep navy, no white'], ['shuffle', 'Shuffle', 'A new color scheme every roll'], ['custom', 'Custom', 'Your own colors, or one of 48 ready-made themes']];
 const calmOS = matchMedia('(prefers-reduced-motion: reduce)');
 // Warm is the look the app opens in. Anyone coming from an earlier version is moved to it once (and told how to go back).
 if (store.get('look', 0) < 2) { if (store.get('theme', '')) store.set('look.moved', store.get('theme', '')); store.set('theme', 'warm'); store.set('look', 2); }
@@ -182,7 +182,7 @@ function applyLook() {
   let L = null;
   if (theme === 'shuffle' || theme === 'custom') { const sc = theme === 'custom' ? customNow() : schemeNow(); SCHEME_KEYS.forEach((k) => r.style.setProperty('--' + k, sc.vars[k])); dark = sc.dark; L = sc.logo || { stem: sc.vars.blue, ring: sc.vars.red, star: sc.vars.yellow }; }
   applyUi();
-  // The P marks in the app (the rail, the cover, the guide) wear the palette's logo colors, or Prime's own.
+  // The P marks in the app (the rail, the cover, the guide) wear the palette's logo colors, or Vereza's own.
   r.style.setProperty('--lg-stem', L ? L.stem : '#2656D9'); r.style.setProperty('--lg-ring', L ? L.ring : '#E22622'); r.style.setProperty('--lg-star', L ? L.star : '#FAC800');
   r.dataset.scheme = dark ? 'dark' : 'light';
   const dice = document.getElementById('dice'); if (dice) dice.hidden = theme !== 'shuffle';
@@ -196,7 +196,7 @@ function rollColors(from) {
   setScheme(from);
 }
 function setScheme(from) {
-  const sc = schemeNow(), t = themeNow(), done = () => toast(t === 'shuffle' && sc.logo ? sc.name + ': colors from the Prime logo.' : t === 'shuffle' ? sc.name + (sc.dark ? ' · dark' : ' · light') + ', ' + (sc.family && sc.family !== 'classic' ? sc.family + ', ' : '') + sc.harmony + ' colors.' : ({ warm: 'Notebook: marbled cover, dot-grid pages.', light: 'Light: black on white.', black: 'Black: white on true black.', dark: 'Dark: Prime at night.', custom: customNow().name + ': your theme.' }[t] || ''));
+  const sc = schemeNow(), t = themeNow(), done = () => toast(t === 'shuffle' && sc.logo ? sc.name + ': colors from the Vereza logo.' : t === 'shuffle' ? sc.name + (sc.dark ? ' · dark' : ' · light') + ', ' + (sc.family && sc.family !== 'classic' ? sc.family + ', ' : '') + sc.harmony + ' colors.' : ({ warm: 'Notebook: marbled cover, dot-grid pages.', light: 'Light: black on white.', black: 'Black: white on true black.', dark: 'Dark: Vereza at night.', custom: customNow().name + ': your theme.' }[t] || ''));
   if (!moving() || !document.startViewTransition) { applyLook(); done(); if (pages.settings && /settings/.test(location.hash)) route(); return; }
   const r = from && from.getBoundingClientRect ? from.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
   const x = r.left + r.width / 2, y = r.top + r.height / 2, R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
@@ -318,8 +318,8 @@ function liveCover() {
     box.style.setProperty('--la', hex ? '#' + hex : '#F7C400');
     box.style.setProperty('--lov', hex ? '#' + hex : '#9AA6FF');
     box.style.setProperty('--lg', hex ? 'linear-gradient(160deg, color-mix(in oklab, #' + hex + ' 38%, #071034), #050A24)' : 'linear-gradient(160deg, #102266, #060E33)');
-    set(kick, 'PRIME DIGITAL CONNECT  ×  ' + name.toUpperCase());
-    set(hello, 'Hello, ' + short + '. We\'re Prime.');
+    set(kick, 'VEREZA  ×  ' + name.toUpperCase());
+    set(hello, 'Hello, ' + short + '. We\'re Vereza.');
     set(h, 'Let\'s carry your invitation to every new ' + (church ? 'neighbor' : 'homeowner') + '.');
     const where = String(d.area || d.city || '').trim();
     set(sub, 'We\'d be honored to help carry that invitation to every new household' + (where ? ' in ' + where.replace(/,\s*[A-Z]{2}$/, '') : ' around you') + '.');
@@ -339,7 +339,7 @@ function liveCover() {
 }
 
 // ---------- a turn of a key unlocks everything ----------
-// The Prime P is a key (its ring the bow, its stem the blade), as in the opening. Buttons that unlock something (build,
+// The Vereza P is a key (its ring the bow, its stem the blade), as in the opening. Buttons that unlock something (build,
 // present, save to the deck, check the key, refresh the decks) carry it; pressing one turns the key with a click before
 // the action runs. Ctrl K, the key to every action, wears it too.
 function keyGlyph(cls) {
@@ -415,20 +415,25 @@ function sonarScope() {
   return { el: svg, blip, ping };
 }
 
-// ---------- the Prime badge, alive: its four pieces morph into the five designers' compositions and back ----------
+// ---------- the Vereza badge, alive: its four pieces morph into the five designers' compositions and back ----------
 // Built on the badge's own geometry (512 grid), so it always returns to the true logo: tile, stem, ring and spark.
 // Martens (overprinted discs), Lissitzky (a bar and planes on a diagonal), Müller-Brockmann (concentric rings), Bass (cut
 // paper). Each state: tile/stem [x, y, w, h, rx, rotate], ring [cx, cy, r, stroke], spark [dx, dy, scale, rotate].
 const MORPH = {
-  badge: { tile: [0, 0, 512, 512, 96, 0], stem: [146, 98, 76, 310, 38, 0], ring: [275, 205, 75, 64], spark: [0, 0, 1, 0] },
-  overprint: { tile: [24, 150, 300, 300, 150, 0], stem: [214, 36, 256, 256, 128, 0], ring: [318, 336, 64, 128], spark: [178, -150, 1.5, 45] },
-  planes: { tile: [292, 52, 168, 168, 0, 14], stem: [6, 292, 500, 30, 6, -24], ring: [146, 176, 54, 108], spark: [196, 170, 1.3, 90] },
-  rings: { tile: [76, 76, 360, 360, 180, 0], stem: [222, 222, 68, 68, 34, 0], ring: [256, 256, 172, 14], spark: [58, 49, 1.1, 0] },
-  cut: { tile: [64, 150, 256, 256, 12, -9], stem: [304, 46, 98, 384, 8, 7], ring: [196, 360, 58, 44], spark: [162, -110, 1.7, 20] }
+  // The Vereza mark: two arms make the V (the left in the stem's blue, the right in the ring's red) and the right arm
+  // rises into a lens (search) with a star of light inside it (truth found).
+  badge: { tile: [0, 0, 512, 512, 96, 0], stem: [161, 98.5, 78.2, 308.5, 39.1, -16.3], arm: [218.8, 209.7, 78.2, 198.4, 39.1, 25.1], ring: [314, 188, 51, 37.4], spark: [116, -19, 0.73, 0], rivet: [232.4, 363.3, 12.7] },
+  // Scissors: the same two arms turned about the rivet at the foot, wide open and then snipped shut.
+  open: { tile: [0, 0, 512, 512, 96, 0], stem: [138.7, 107.65, 78.2, 308.5, 39.1, -28.3], arm: [231.2, 217.5, 78.2, 198.4, 39.1, 39.1], ring: [353.9, 213.1, 51, 37.4], spark: [155.9, 6.1, 0.73, 0], rivet: [232.4, 363.3, 12.7] },
+  snip: { tile: [0, 0, 512, 512, 96, 0], stem: [184.7, 94.25, 78.2, 308.5, 39.1, -4.3], arm: [204.9, 205.2, 78.2, 198.4, 39.1, 11.1], ring: [269.2, 173.7, 51, 37.4], spark: [71.2, -33.3, 0.73, 0], rivet: [232.4, 363.3, 12.7] },
+  overprint: { tile: [24, 150, 300, 300, 150, 0], stem: [214, 36, 256, 256, 128, 0], arm: [250, 250, 190, 190, 95, 0], ring: [318, 336, 64, 128], spark: [178, -150, 1.5, 45], rivet: [318, 336, 0] },
+  planes: { tile: [292, 52, 168, 168, 0, 14], stem: [6, 292, 500, 30, 6, -24], arm: [60, 40, 30, 430, 6, 30], ring: [146, 176, 54, 108], spark: [196, 170, 1.3, 90], rivet: [146, 176, 0] },
+  rings: { tile: [76, 76, 360, 360, 180, 0], stem: [222, 222, 68, 68, 34, 0], arm: [236, 52, 40, 40, 20, 0], ring: [256, 256, 172, 14], spark: [58, 49, 1.1, 0], rivet: [256, 256, 0] },
+  cut: { tile: [64, 150, 256, 256, 12, -9], stem: [304, 46, 98, 384, 8, 7], arm: [20, 330, 300, 56, 8, -6], ring: [196, 360, 58, 44], spark: [162, -110, 1.7, 20], rivet: [196, 360, 0] }
 };
-const MORPH_ORDER = ['overprint', 'planes', 'rings', 'cut'];
+const MORPH_ORDER = ['scissors', 'overprint', 'scissors', 'planes', 'scissors', 'rings', 'scissors', 'cut'];
 primeMorph.n = 0;
-function primeMorph(size, o = {}) {
+function primeMorph( /* the animated Vereza badge */ size, o = {}) {
   const svgNS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(svgNS, 'svg');
   svg.setAttribute('viewBox', '-40 -40 592 592'); svg.setAttribute('class', 'pm st-badge' + (o.cls ? ' ' + o.cls : '')); svg.setAttribute('aria-hidden', 'true');
   svg.style.width = svg.style.height = size + 'px';
@@ -439,20 +444,24 @@ function primeMorph(size, o = {}) {
     '<linearGradient id="' + gid + 's" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4A78FF"/><stop offset=".55" stop-color="#1D4ED8"/><stop offset="1" stop-color="#163CA8"/></linearGradient>' +
     '<linearGradient id="' + gid + 'r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5A4F"/><stop offset=".5" stop-color="#E1251B"/><stop offset="1" stop-color="#B51A12"/></linearGradient>';
   svg.append(defs);
-  const tile = mk('rect', { class: 'pm-tile', fill: 'url(#' + gid + 't)' }), stem = mk('rect', { class: 'pm-stem', fill: 'url(#' + gid + 's)' }), ring = mk('circle', { class: 'pm-ring', fill: 'none', stroke: 'url(#' + gid + 'r)' });
-  const spark = mk('path', { class: 'pm-spark', d: 'M198 179 L203.5 201.5 L226 207 L203.5 212.5 L198 235 L192.5 212.5 L170 207 L192.5 201.5 Z' });
+  const tile = mk('rect', { class: 'pm-tile', fill: 'url(#' + gid + 't)' }), stem = mk('rect', { class: 'pm-stem', fill: 'url(#' + gid + 's)' }), arm = mk('rect', { class: 'pm-arm', fill: 'url(#' + gid + 'r)' }), ring = mk('circle', { class: 'pm-ring', fill: 'none', stroke: 'url(#' + gid + 'r)' });
+  const rivet = mk('circle', { class: 'pm-rivet' }), spark = mk('path', { class: 'pm-spark', d: 'M198 179 L203.5 201.5 L226 207 L203.5 212.5 L198 235 L192.5 212.5 L170 207 L192.5 201.5 Z' });
   const rect = (n, [x, y, w, h, rx, rot]) => { Object.assign(n.style, { x: x + 'px', y: y + 'px', width: w + 'px', height: h + 'px', rx: rx + 'px', ry: rx + 'px', transform: 'rotate(' + rot + 'deg)' }); };
-  const set = (name) => { const S = MORPH[name]; rect(tile, S.tile); rect(stem, S.stem); Object.assign(ring.style, { cx: S.ring[0] + 'px', cy: S.ring[1] + 'px', r: S.ring[2] + 'px', strokeWidth: S.ring[3] + 'px' });
+  const set = (name) => { const S = MORPH[name]; rect(tile, S.tile); rect(stem, S.stem); rect(arm, S.arm); Object.assign(rivet.style, { cx: S.rivet[0] + 'px', cy: S.rivet[1] + 'px', r: S.rivet[2] + 'px' }); Object.assign(ring.style, { cx: S.ring[0] + 'px', cy: S.ring[1] + 'px', r: S.ring[2] + 'px', strokeWidth: S.ring[3] + 'px' });
     spark.style.transform = 'translate(' + S.spark[0] + 'px,' + S.spark[1] + 'px) rotate(' + S.spark[3] + 'deg) scale(' + S.spark[2] + ')';
     svg.setAttribute('class', 'pm st-' + name + (o.cls ? ' ' + o.cls : '')); svg.dataset.state = name; };
   set('badge'); svg.morphTo = set;
   if (!moving()) return svg;
-  let k = Math.floor(Math.random() * MORPH_ORDER.length), timer = null, live = !o.hover;
+  let k = 0, timer = null, live = !o.hover;
   const hold = o.hold || 2300, rest = o.rest || 1500;
   const step = () => {
     if (o.hover ? !live : !svg.isConnected && svg.dataset.started) { set('badge'); return; }
     svg.dataset.started = '1';
-    if (svg.dataset.state === 'badge') { set(MORPH_ORDER[k++ % MORPH_ORDER.length]); timer = setTimeout(step, hold); }
+    if (svg.dataset.state === 'badge') {
+      const next = MORPH_ORDER[k++ % MORPH_ORDER.length];
+      if (next === 'scissors') { set('open'); timer = setTimeout(() => { set('snip'); timer = setTimeout(() => { set('open'); timer = setTimeout(() => { set('badge'); timer = setTimeout(step, rest); }, 300); }, 260); }, 420); return; }
+      set(next); timer = setTimeout(step, hold);
+    }
     else { set('badge'); timer = setTimeout(step, o.hover ? 260 : rest); }
   };
   if (o.hover) {
@@ -529,7 +538,7 @@ let leave = null;
 let morph = false;
 // ---------- the prospect's name, dot to dot ----------
 // Behind a kit's page (and the build screen) the prospect's name is set in dots on the notebook's grid and joined by
-// pencil, its dots running from Prime yellow to blue across the word, with the star after it. Still: faint, behind
+// pencil, its dots running from Vereza yellow to blue across the word, with the star after it. Still: faint, behind
 // the work. Busy: it breathes. Draw: the pencil joins it in from the first letter, then it breathes.
 function nameArt(text, mode) {
   const N = window.Plates && Plates.dotname ? Plates.dotname(text, 60) : null;
@@ -554,7 +563,7 @@ function nameArt(text, mode) {
     '<g class="g" opacity="' + (mode === 'still' ? '.42' : '1') + '"><g fill="none" stroke="' + pencil + '" stroke-width=".1" stroke-linecap="round" opacity=".45">' + lines + '</g>' + dots + star + '</g></svg>';
   return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
 }
-// Put a name behind this page (or, with no name, the Prime P again).
+// Put a name behind this page (or, with no name, the Vereza P again).
 function pageName(text, drawing) {
   const m = document.querySelector('main'); if (!m) return;
   const still = text ? nameArt(text, 'still') : '';
@@ -592,9 +601,9 @@ async function route() {
   const folio = document.getElementById('folio'); if (folio) folio.textContent = String(({ library: 1, kit: 2, new: 3, run: 4, crm: 5, ads: 6, brand: 7, company: 8, settings: 9 })[name] || 1);
   view.focus({ preventScroll: true });
 }
-// Prime's media pricing: shown on every deck's Media options slide and beside the mock ads.
+// Vereza's media pricing: shown on every deck's Media options slide and beside the mock ads.
 function pricingCard() {
-  const rows = el('div', { class: 'pr-rows' }), card = el('section', { class: 'card' }, el('h2', { text: 'Prime pricing' }),
+  const rows = el('div', { class: 'pr-rows' }), card = el('section', { class: 'card' }, el('h2', { text: 'Vereza pricing' }),
     el('p', { class: 'small muted', text: 'Media pricing on every deck\'s Media options slide and beside the mock ads. New decks use it at once; the button below brings decks already made up to date.' }), rows);
   const row = (o) => { const k = el('input', { type: 'text', value: o.kind || '', 'aria-label': 'Option name', placeholder: 'VIDEO' }), c = el('input', { type: 'text', inputmode: 'numeric', value: o.cost ? String(o.cost) : '', 'aria-label': 'Price in dollars', placeholder: '5200' }), n = el('input', { type: 'text', value: o.note || '', 'aria-label': 'What it is', placeholder: 'Audience-focused video campaign' });
     const r = el('div', { class: 'pr-row' }, k, el('span', { class: 'pr-cur' }, '$', c), n); r.get = () => ({ kind: k.value, cost: Number(String(c.value).replace(/[^\d.]/g, '')), note: n.value }); return r; };
@@ -605,7 +614,7 @@ function pricingCard() {
   return card;
 }
 async function addPrimeKits() {
-  try { const r = await S.addStarter(); toast(r.added.length ? 'Added ' + r.added.length + ' Prime kit' + (r.added.length > 1 ? 's' : '') + '. Their decks are being built now.' : r.total ? 'Every Prime kit is already in your Library.' : 'This copy of the app has no Prime kits inside.'); refreshCount(); if (r.added.length) { location.hash = 'library'; route(); } }
+  try { const r = await S.addStarter(); toast(r.added.length ? 'Added ' + r.added.length + ' Vereza kit' + (r.added.length > 1 ? 's' : '') + '. Their decks are being built now.' : r.total ? 'Every Vereza kit is already in your Library.' : 'This copy of the app has no Vereza kits inside.'); refreshCount(); if (r.added.length) { location.hash = 'library'; route(); } }
   catch (e) { toast(errText(e)); }
 }
 // Drop kits anywhere: kit zips, kit folders, a folder of kits, or a deck and its PDFs. (The Studio's photo rows
@@ -637,7 +646,7 @@ async function refreshCount() { const all = await S.kits(); $('#kit-count').text
 // New prospect: the same fields as the New prospect form on GitHub.
 const BIBLES = ['NIV', 'ESV', 'NASB', 'NKJV', 'KJV', 'CSB', 'NLT', 'NABRE'];
 pages.new = async () => {
-  // Who is pitching: Prime gets its own options (faith model, Bible, pilot); any other company gets its own kit.
+  // Who is pitching: Vereza gets its own options (faith model, Bible, pilot); any other company gets its own kit.
   const co = window.activeCompany ? await window.activeCompany().catch(() => null) : null, isPrime = !co || co.prime;
   const set = await S.settings();
   const d = Object.assign({ type: 'auto', model: 'auto', bible: 'auto', design: 'abstract' }, store.get('draft', {}));
@@ -795,7 +804,7 @@ pages.run = async () => {
 
 // The Library: every kit as its cover slide.
 let dealtAt = 0;
-// While the Prime kits (or imported kits) are being finished on this computer: what is happening, and how far along.
+// While the Vereza kits (or imported kits) are being finished on this computer: what is happening, and how far along.
 function setupBanner() {
   const bar = el('div', { class: 'adbar' }, el('i')), head = el('b'), sub = el('span', { class: 'muted small' });
   const box = el('div', { class: 'setup', hidden: true, role: 'status' }, el('div', { class: 'sp-mini', 'aria-hidden': 'true' }), el('div', { style: 'min-width:0;flex:1' }, head, sub, bar));
@@ -856,8 +865,8 @@ pages.library = async () => {
     el('div', { class: 'head mb' }, el('span', { class: 'mb-num', 'aria-hidden': 'true', text: String(all.length).padStart(2, '0') }), el('div', { class: 'mb-title' }, primeMorph(58, { delay: 2400 }), el('div', {}, el('div', { class: 'eyebrow', text: all.length + ' kit' + (all.length === 1 ? '' : 's') + ' on this computer' }), el('h1', { text: 'Library' }))),
       el('div', { class: 'actions' }, el('button', { class: 'btn ghost', type: 'button', onclick: () => doImport('folder') }, 'Import a folder…'), el('button', { class: 'btn dark', type: 'button', onclick: () => doImport('files') }, 'Import kits…'))));
   if (!all.length) wrap.append(el('div', { class: 'empty' }, el('div', { class: 'pm-host' }, primeMorph(150, { hold: 2000, rest: 1300 })), el('h2', { text: 'Your kits will live here.' }),
-    el('p', { text: 'Add the Prime kits that come with the app, build a new one, or drop any kit zip, kit folder or deck onto this window.' }),
-    el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', onclick: addPrimeKits }, 'Add the Prime kits'), el('a', { class: 'btn dark', href: '#new' }, 'New prospect'), el('button', { class: 'btn ghost', type: 'button', onclick: () => doImport('files') }, 'Import kits…'))));
+    el('p', { text: 'Add the Vereza kits that come with the app, build a new one, or drop any kit zip, kit folder or deck onto this window.' }),
+    el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', onclick: addPrimeKits }, 'Add the Vereza kits'), el('a', { class: 'btn dark', href: '#new' }, 'New prospect'), el('button', { class: 'btn ghost', type: 'button', onclick: () => doImport('files') }, 'Import kits…'))));
   else { wrap.append(libraryStats(all)); wrap.append(el('div', { class: 'toolbar' }, q, el('div', { class: 'seg', role: 'group', 'aria-label': 'Show' }, segBtns), el('span', { class: 'grow' }), sortSel), grid); paint(); }
   view.append(wrap);
 };
@@ -1041,12 +1050,12 @@ pages.settings = async () => {
     el('div', { class: 'swatches' }, ['rail', 'ground', 'card', 'accent', 'blue', 'red', 'ink'].map((k) => el('i', { title: k + ' ' + V[k], style: 'background:' + V[k] }))),
     recent.length ? el('div', { class: 'recent' }, el('span', { class: 'hint', text: 'Recent rolls' }), recent.map((r2) => el('button', { type: 'button', class: 'past', title: r2.name, onclick: (e) => { const cur = store.get('seed'); store.set('seed', r2.seed); store.set('recentSeeds', [cur, ...store.get('recentSeeds', []).filter((x) => x !== r2.seed && x !== cur)].slice(0, 6)); setScheme(e.currentTarget); } },
       [r2.vars.rail, r2.vars.ground, r2.vars.accent].map((c) => el('i', { style: 'background:' + c })), el('span', { text: r2.name })))) : null) : null;
-  // Every palette from the Prime logo catalog, shown as its logo: one click makes it the app's colors (in Shuffle).
+  // Every palette from the Vereza logo catalog, shown as its logo: one click makes it the app's colors (in Shuffle).
   function logoPicker() {
     if (typeof LOGO_SCHEMES === 'undefined') return null;
     const cur = themeNow() === 'shuffle' && sc.logo ? sc.logo.id : '';
-    return el('div', { class: 'field logopick' }, el('span', { class: 'label', text: 'Prime logo colors' }, el('span', { class: 'hint', text: LOGO_SCHEMES.length + ' palettes from the logo catalog. Pick one, or roll: Shuffle deals these in too.' })),
-      el('div', { class: 'logos', role: 'group', 'aria-label': 'Prime logo colors' }, LOGO_SCHEMES.map((L) => el('button', { type: 'button', class: 'logo-pal', title: L.name, 'aria-pressed': String(cur === L.id), onclick: (e) => {
+    return el('div', { class: 'field logopick' }, el('span', { class: 'label', text: 'Vereza logo colors' }, el('span', { class: 'hint', text: LOGO_SCHEMES.length + ' palettes from the logo catalog. Pick one, or roll: Shuffle deals these in too.' })),
+      el('div', { class: 'logos', role: 'group', 'aria-label': 'Vereza logo colors' }, LOGO_SCHEMES.map((L) => el('button', { type: 'button', class: 'logo-pal', title: L.name, 'aria-pressed': String(cur === L.id), onclick: (e) => {
         const prev = store.get('seed', 20261106); if (prev !== 'logo:' + L.id) store.set('recentSeeds', [prev, ...store.get('recentSeeds', []).filter((x) => x !== prev && x !== 'logo:' + L.id)].slice(0, 6));
         store.set('seed', 'logo:' + L.id); store.set('theme', 'shuffle'); setScheme(e.currentTarget); } },
         el('img', { src: 'logos/' + L.id + '.jpg', alt: '', width: 60, height: 60, loading: 'lazy' }), el('span', { text: L.name })))));
@@ -1092,7 +1101,7 @@ pages.settings = async () => {
       seg('size', 'Text size', O.size), seg('turn', 'Page turns', O.turn),
       el('button', { class: 'btn ghost sm', type: 'button', onclick: () => { store.del('ui'); applyUi(); route(); toast('Type, corners, paper and cover are back to the defaults.'); } }, 'Reset type and layout'));
   }
-  // The guide: Prime, the logo as a little creature that points things out.
+  // The guide: Vereza, the logo as a little creature that points things out.
   function guidePicker() {
     if (!window.guideMode) return null;
     const G = [['on', 'On'], ['quiet', 'Quiet'], ['off', 'Hidden']];
@@ -1109,7 +1118,7 @@ pages.settings = async () => {
     el('section', { class: 'card' }, el('h2', { class: 'withlock' }, lock, 'Research key'),
       el('ol', { class: 'howto' },
         el('li', {}, 'Open ', el('a', { href: '#', onclick: (e) => { e.preventDefault(); S.openLink('https://console.anthropic.com/settings/keys'); } }, 'console.anthropic.com → API keys'), '.'),
-        el('li', { text: 'Create a key named "PRIME Pitch Perfect" and copy it.' }),
+        el('li', { text: 'Create a key named "Vereza" and copy it.' }),
         el('li', { text: 'Paste it below. It is checked, then stored ' + (set.encrypted ? 'encrypted with Windows\' own key store' : 'on this computer') + '.' })),
       el('div', { class: 'field' }, el('label', { for: 's-key' }, 'Key'), key),
       el('div', { class: 'actions' }, save, set.hasKey ? el('span', { class: 'muted small', text: '✓ A key is saved.' }) : null), status),
@@ -1119,9 +1128,9 @@ pages.settings = async () => {
       el('p', { class: 'small muted', text: 'The app writes anything that goes wrong to its log. Send it along with a description, and it can be fixed quickly.' }),
       el('button', { class: 'btn ghost', type: 'button', onclick: () => S.appLog() }, 'Show the app\'s log')),
     pricingCard(),
-    el('section', { class: 'card' }, el('h2', { text: 'The Prime kits' }),
-      el('p', { class: 'small muted', text: 'The app comes with every Prime kit made so far. Deleted one, or want them back? This adds any that are not in your Library (no cost).' }),
-      el('button', { class: 'btn ghost', type: 'button', onclick: addPrimeKits }, 'Add the Prime kits')),
+    el('section', { class: 'card' }, el('h2', { text: 'The Vereza kits' }),
+      el('p', { class: 'small muted', text: 'The app comes with every Vereza kit made so far. Deleted one, or want them back? This adds any that are not in your Library (no cost).' }),
+      el('button', { class: 'btn ghost', type: 'button', onclick: addPrimeKits }, 'Add the Vereza kits')),
     el('section', { class: 'card' }, el('h2', { text: 'Where kits are saved' }), el('p', { class: 'path', text: set.kitsDir }),
       el('button', { class: 'btn ghost', type: 'button', onclick: () => S.kitsFolder() }, 'Open the folder')),
     el('section', { class: 'card' }, el('h2', { text: 'What it needs' }),
@@ -1143,7 +1152,7 @@ function refreshCard() {
     el('div', { class: 'actions' }, go, line), bar);
 }
 
-const SLIDE_NAMES = { open: 'Opening', journey: 'Their journey', mission: 'Their mission', year: 'Their year', prime: 'Meet Prime', growth: 'Community growth', lead: 'Where growth is', dev: 'What is being built', week: 'This week', whynow: 'Why now', gap: 'The bridge', four: 'Four doors', engine: 'How it works', beyond: 'Beyond the walls', follow: 'The pathway', attend: 'Proof: parish client', faulk: 'Proof: live campaign', report: 'How we measure', calc: 'Impact calculator', pilot: 'The pilot', invest: 'Investment', options: 'Ways to start', close: 'Close', sources: 'Sources', listings: 'Listings to fix', room: 'Room to grow', media: 'Media options', markets: 'Growth by market', indicators: 'Audience data', homes: 'Homes sold' };
+const SLIDE_NAMES = { open: 'Opening', journey: 'Their journey', mission: 'Their mission', year: 'Their year', prime: 'Meet Vereza', growth: 'Community growth', lead: 'Where growth is', dev: 'What is being built', week: 'This week', whynow: 'Why now', gap: 'The bridge', four: 'Four doors', engine: 'How it works', beyond: 'Beyond the walls', follow: 'The pathway', attend: 'Proof: parish client', faulk: 'Proof: live campaign', report: 'How we measure', calc: 'Impact calculator', pilot: 'The pilot', invest: 'Investment', options: 'Ways to start', close: 'Close', sources: 'Sources', listings: 'Listings to fix', room: 'Room to grow', media: 'Media options', markets: 'Growth by market', indicators: 'Audience data', homes: 'Homes sold' };
 const slideName = (key) => SLIDE_NAMES[key] || (/^aud(\d)$/.test(key) ? 'Audience ' + (+key.slice(3) + 1) : key);
 
 // ---------- the Deck Studio: make the animated deck theirs, with a live preview ----------
@@ -1263,7 +1272,7 @@ async function openStudio(k) {
         el('p', { class: 'muted small', text: 'The preview updates as you change things. Edit words right on the slide, rewrite the talk track, move slides. Nothing is saved until you press Save to the deck.' })),
       el('div', { class: 'st-panel' },
         sec('Colors', 'Their deck colors. Try a preset, or pick your own.', el('div', { class: 'st-colors' }, colorRow('dark', 'Deep'), colorRow('mid', 'Main'), colorRow('accent', 'Accent'), colorRow('brand', 'Brand')),
-          el('div', { class: 'actions' }, el('button', { class: 'btn ghost sm', type: 'button', onclick: () => setColors({}) }, 'Their colors'), el('button', { class: 'btn ghost sm', type: 'button', onclick: () => setColors({ dark: '0E1F62', mid: '1A38B2', accent: '8B9FEE', brand: 'F7C400' }) }, 'Prime navy'), el('button', { class: 'btn ghost sm', type: 'button', onclick: surprise }, 'Surprise me'))),
+          el('div', { class: 'actions' }, el('button', { class: 'btn ghost sm', type: 'button', onclick: () => setColors({}) }, 'Their colors'), el('button', { class: 'btn ghost sm', type: 'button', onclick: () => setColors({ dark: '0E1F62', mid: '1A38B2', accent: '8B9FEE', brand: 'F7C400' }) }, 'Vereza navy'), el('button', { class: 'btn ghost sm', type: 'button', onclick: surprise }, 'Surprise me'))),
         sec('Background art', 'Made from the deck\'s colors, for any spot without a photo.', artBox, el('label', { class: 'check' }, artAll, 'Use art in every photo spot (no photos)')),
         sec('Photos', 'Choose a file, or drop a photo onto a row.', ...spotRows),
         sec('Typeface', 'For the headlines and big numbers. Body text stays easy to read.', el('div', { class: 'seg' }, fontBtns)),
@@ -1352,7 +1361,7 @@ function followCard(k) {
   to.addEventListener('input', () => { store.set('follow.to.' + k.dir, to.value); fill(); }); from.addEventListener('input', () => { store.set('follow.from', from.value); fill(); });
   const leave = k.files.find((f) => /leave/i.test(f.name));
   const card = el('details', { class: 'card follow' }, el('summary', {}, 'Follow up after the meeting'),
-    el('p', { class: 'muted small', text: 'A thank-you in Prime\'s voice, written from this kit: their story, two of their numbers, the one ask and the launch date. It never mentions the fee or their budget.' }),
+    el('p', { class: 'muted small', text: 'A thank-you in Vereza\'s voice, written from this kit: their story, two of their numbers, the one ask and the launch date. It never mentions the fee or their budget.' }),
     el('div', { class: 'fl-two' }, el('label', { class: 'field' }, el('span', { class: 'label', text: 'To' }), to), el('label', { class: 'field' }, el('span', { class: 'label', text: 'From' }), from)),
     el('label', { class: 'field' }, el('span', { class: 'label', text: 'Subject' }), subj),
     el('label', { class: 'field' }, el('span', { class: 'label', text: 'Email' }), body),
@@ -1527,9 +1536,9 @@ async function welcome(force) {
   const tile = document.createElementNS(svgNS, 'rect'); tile.setAttribute('x', 336); tile.setAttribute('y', 108); tile.setAttribute('width', 48); tile.setAttribute('height', 48); tile.setAttribute('rx', 10); tile.setAttribute('fill', '#F7C400'); tile.style.cssText = 'transform-origin:360px 132px;animation:pop .7s cubic-bezier(.2,1.35,.35,1) both 1.6s'; svg.append(tile);
   const img = document.createElementNS(svgNS, 'image'); img.setAttribute('href', 'icons/prime-mark.png'); img.setAttribute('x', 349); img.setAttribute('y', 116); img.setAttribute('width', 22); img.setAttribute('height', 28); img.style.cssText = 'animation:pop .7s cubic-bezier(.2,1.35,.35,1) both 1.75s;transform-origin:360px 130px'; svg.append(img);
   const done = (h) => () => { store.set('welcomed', true); w.remove(); if (h) location.hash = h; };
-  const w = el('div', { class: 'welcome', role: 'dialog', 'aria-label': 'Welcome to PRIME: PITCH PERFECT' }, plate('void', 'welcome', ['#F7C400', '#FFFFFF', '#2F63FF'], { fit: 'xMidYMid slice', x: 0.9, hz: 0.84, size: 0.07 }, 'pl-welcome pl-void'), plate('overprint', 'welcome', PRIME_INKS.slice(0, 3), { blend: 'screen', opacity: 0.7, n: 6, band: [0.72, 1] }, 'pl-welcome'), el('div', { class: 'in' }, svg,
-    primeMorph(84, { delay: 1200, cls: 'pm-welcome' }), el('div', { class: 'eyebrow', style: 'color:#F7C400', text: 'PRIME: PITCH PERFECT' }), el('h1', { text: 'Every meeting, pitch perfect.' }),
-    el('p', { class: 'lead', text: prime.length ? 'Ready to go. Your Library already holds the Prime kits: ' + prime.join(', ').replace(/, ([^,]*)$/, ' and $1') + '. Their decks are being built on this computer now, about a minute each, at no cost.' : 'Name a prospect. Pitch Perfect researches their town and their story, and you get the deck, the talk track, the cheat sheet and the leave-behind in about seven minutes.' }),
+  const w = el('div', { class: 'welcome', role: 'dialog', 'aria-label': 'Welcome to Vereza' }, plate('void', 'welcome', ['#F7C400', '#FFFFFF', '#2F63FF'], { fit: 'xMidYMid slice', x: 0.9, hz: 0.84, size: 0.07 }, 'pl-welcome pl-void'), plate('overprint', 'welcome', PRIME_INKS.slice(0, 3), { blend: 'screen', opacity: 0.7, n: 6, band: [0.72, 1] }, 'pl-welcome'), el('div', { class: 'in' }, svg,
+    primeMorph(84, { delay: 1200, cls: 'pm-welcome' }), el('div', { class: 'eyebrow', style: 'color:#F7C400', text: 'Vereza' }), el('h1', { text: 'Walk into every meeting ready.' }),
+    el('p', { class: 'lead', text: prime.length ? 'Ready to go. Your Library already holds the Vereza kits: ' + prime.join(', ').replace(/, ([^,]*)$/, ' and $1') + '. Their decks are being built on this computer now, about a minute each, at no cost.' : 'Name a prospect. Pitch Perfect researches their town and their story, and you get the deck, the talk track, the cheat sheet and the leave-behind in about seven minutes.' }),
     el('div', { class: 'steps3' },
       el('div', {}, el('em', { text: 'Now' }), el('b', { text: 'Present any kit' }), el('span', { text: 'Open a kit and press Present. With a second screen, your talk track and clock stay with you. R rehearses.' })),
       el('div', {}, el('em', { text: 'Any time' }), el('b', { text: 'Bring in your other decks' }), el('span', { text: 'Drop a kit zip, a kit folder or a deck and its PDFs onto this window.' })),
@@ -1590,7 +1599,7 @@ $('#dice').addEventListener('click', (e) => rollColors(e.currentTarget)); applyL
 { const nav = $('.rail nav'); if (nav) nav.after(keyed(el('button', { class: 'keybtn', type: 'button', title: 'Every action, kit and setting in one place (Ctrl K)', onclick: () => palette() }, el('span', { text: 'Find anything' }), el('kbd', { text: 'Ctrl K' })))); }
 addEventListener('hashchange', route);
 watchRunning(); refreshCount();
-// On launch: down the rabbit hole, where the Prime P is built as a key, unlocks the door (the Prime tile) and we go
+// On launch: down the rabbit hole, where the Vereza P is built as a key, unlocks the door (the Vereza tile) and we go
 // through its keyhole into the app (Full motion; Calm skips it, Off shows nothing). The Library is dealt behind it.
 const splashed = new Promise((done) => {
   const sp = $('#splash'); if (!sp) return done();

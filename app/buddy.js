@@ -1,4 +1,4 @@
-// Prime, the guide: the logo come to life. Its head is the P's ring with a glossy dark face inside, its body the
+// Vereza, the guide: the logo come to life. Its head is the P's ring with a glossy dark face inside, its body the
 // stem's ball and its friend the star, a little ball that floats beside it. It breathes, blinks and watches the
 // pointer; it says what each page is for (once per page each session, or whenever it is clicked); it thinks while
 // research and builds run, hops when something is done, and frowns when something goes wrong. It wears the logo colors
@@ -17,13 +17,15 @@
   const h = (tag, cls, kids) => { const n = document.createElement(tag); if (cls) n.className = cls; (kids || []).forEach((k) => n.append(k)); return n; };
 
   // ---------- the creature ----------
-  // The P itself: a glossy stem and ring; the ring's open middle (its counter) is where it looks out from.
+  // The V works like a pair of scissors: both arms pivot on the rivet at its foot and snip shut and open again.
+  // The V itself: a glossy left arm (the stem's color) and right arm rising into the lens (the ring's color); the lens's
+  // open middle is where it looks out from.
   const eyeL = h('span', 'bd-eye l', [h('i')]), eyeR = h('span', 'bd-eye r', [h('i')]), mouth = h('span', 'bd-mouth');
   const face = h('span', 'bd-face', [eyeL, eyeR, mouth]);
   const head = h('span', 'bd-ring', [h('span', 'bd-donut'), h('span', 'bd-cheek l'), h('span', 'bd-cheek r'), face]);
-  const torso = h('span', 'bd-stem');
+  const torso = h('span', 'bd-stem'), arm = h('span', 'bd-arm');
   const star = h('span', 'bd-star', [h('span', 'bd-spark')]);
-  const body = h('button', 'bd-body', [h('span', 'bd-shadow'), h('span', 'bd-p', [torso, head]), star]);
+  const body = h('button', 'bd-body', [h('span', 'bd-shadow'), h('span', 'bd-p', [h('span', 'bd-bl', [torso]), h('span', 'bd-br', [arm, head]), h('span', 'bd-rivet')]), star]);
   body.type = 'button'; const labelBody = () => body.setAttribute('aria-label', nm() + ', your guide. Click for a tip.'); labelBody();
   // The typed-out text is for the eye; screen readers get the whole message once, from a hidden live region.
   const text = h('p', 'bd-text'), acts = h('div', 'bd-acts'), live = h('span', 'sr-only'); text.setAttribute('aria-hidden', 'true');
@@ -32,6 +34,7 @@
   const bubble = h('div', 'bd-bubble', [hush, text, acts]); bubble.hidden = true;
   const buddy = h('div', 'buddy', [live, bubble, body]); buddy.id = 'buddy'; buddy.dataset.mood = 'idle';
 
+  const snip = (twice) => { if (still()) return; buddy.classList.remove('snip', 'snip2'); void buddy.offsetWidth; buddy.classList.add(twice ? 'snip2' : 'snip'); clearTimeout(snip.t); snip.t = setTimeout(() => buddy.classList.remove('snip', 'snip2'), 1100); };
   const setMood = (m, ms) => { buddy.dataset.mood = m; clearTimeout(setMood.t); if (ms) setMood.t = setTimeout(() => { buddy.dataset.mood = busy() ? 'think' : 'idle'; }, ms); };
 
   // ---------- speech ----------
@@ -113,7 +116,7 @@
       ['Real results in Proof make the decks stronger. I never make results up.']
     ],
     settings: () => [
-      ['Pick a Prime logo palette and I will wear its colors.', { point: '.logopick' }],
+      ['Pick a Vereza logo palette and I will wear its colors.', { point: '.logopick' }],
       ['If I talk too much, set me to Quiet here. I will only speak when you click me.', { point: '.guidepick' }]
     ]
   };
@@ -141,7 +144,7 @@
     if (/could not|couldn't|failed|error|missing|offline|first\./i.test(s)) setMood('worried', 2600);
     else if (/ready|done|saved|added|nice|imported|built|deleted|copied/i.test(s)) setMood('happy', 1500);
   });
-  wrap('burst', () => { setMood('cheer', 2400); if (mode() === 'on') say('It is ready! Open the deck and have a look.', { mood: 'cheer' }); });
+  wrap('burst', () => { setMood('cheer', 2400); snip(true); if (mode() === 'on') say('It is ready! Open the deck and have a look.', { mood: 'cheer' }); });
 
   // ---------- eyes that follow, blinks, a nap when left alone ----------
   let px = 0, py = 0, raf = 0, lastMove = Date.now();
@@ -159,7 +162,7 @@
 
   body.addEventListener('click', () => {
     if (buddy.dataset.mood === 'sleep') { setMood('happy', 1200); say('Oh! I am awake. What are we working on?'); return; }
-    buddy.classList.remove('boop'); void body.offsetWidth; buddy.classList.add('boop');
+    buddy.classList.remove('boop'); void body.offsetWidth; buddy.classList.add('boop'); snip();
     if (bubble.hidden || mode() !== 'off') tip(false);
   });
 
@@ -240,7 +243,7 @@
   const tools = h('div', 'bd-tools', [tool('Ask ' + nm() + ' (Ctrl+J)', ICON_ASK, () => askPanel()), tool('Dress ' + nm(), ICON_DRESS, wardrobe), tool('Talk to ' + nm(), ICON_MIC, () => askPanel(true))]);
   buddy.insertBefore(tools, body);
 
-  // ---------- Ask Prime: type or speak; it answers, searches, and does things in the app ----------
+  // ---------- Ask Vereza: type or speak; it answers, searches, and does things in the app ----------
   const history = [];
   let listening = false;
   function stopListening() { if (listening) { listening = false; S.voiceStop && S.voiceStop(); } }
@@ -312,10 +315,12 @@
     document.body.append(buddy); apply();
     addEventListener('hashchange', () => setTimeout(arrived, 450));
     const sp = document.getElementById('splash');
-    // At the end of the opening Prime hops up out of the notebook page; after that it greets the first page.
+    // At the end of the opening Vereza hops up out of the notebook page; after that it greets the first page.
     const enter = () => { if (document.getElementById('splash')) { buddy.classList.add('over'); setTimeout(() => buddy.classList.remove('over'), 1600); } buddy.classList.add('born'); setTimeout(arrived, 900); };
     if (sp) { let on = false; const go = () => { if (!on) { on = true; enter(); } }; setTimeout(go, root.dataset.motion === 'calm' ? 300 : 4300); const t = setInterval(() => { if (!document.getElementById('splash')) { clearInterval(t); go(); } }, 120); } else enter();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  window.buddy = { say, point, mood: setMood };
+  window.buddy = { say, point, mood: setMood, snip };
+  // Now and then, while idle, a quiet snip.
+  setInterval(() => { if (!buddy.hidden && !document.hidden && buddy.dataset.mood === 'idle' && Math.random() < 0.35) snip(); }, 9000);
 })();

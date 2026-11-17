@@ -1,10 +1,10 @@
-// PRIME: PITCH PERFECT on the web (iPhone, iPad, Android, Safari, any browser). The desktop app's screens talk to the
+// Vereza on the web (iPhone, iPad, Android, Safari, any browser). The desktop app's screens talk to the
 // computer through window.studio; here the same calls are answered inside the browser: everything is kept on this
 // device (IndexedDB), research goes straight to Anthropic with the user's own key, decks and documents are made by
 // the bundled engine (engine.js), and voice uses the browser's own speech recognition.
 'use strict';
 (() => {
-  const E = window.PPE, VERSION = '0.31.0-web';
+  const E = window.PPE, VERSION = '0.34.0-web';
   // ---------- storage: one small key-value store in IndexedDB ----------
   const db = new Promise((ok, bad) => { const r = indexedDB.open('pitch-perfect', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); });
   const tx = async (mode, fn) => { const d = await db; return new Promise((ok, bad) => { const t = d.transaction('kv', mode), s = t.objectStore('kv'), r = fn(s); t.oncomplete = () => ok(r && r.result); t.onerror = () => bad(t.error); }); };
@@ -124,11 +124,11 @@
     crmNotice: async () => '',
     crmSave: (p) => inTurn(async () => { const all = await clients(), c = E.CRM.clean(p, (d) => d), i = all.findIndex((x) => x.id === c.id); if (i >= 0) { c.created = all[i].created || c.created; all[i] = c; } else all.unshift(c); await put('clients', all); return c; }),
     crmDelete: (pid) => inTurn(async () => { const all = await clients(); await put('clients', all.filter((x) => x.id !== pid)); return true; }),
-    crmExport: async () => { const csv = E.CRM.csv({ prospects: await clients() }), a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'Prime clients ' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); return { path: a.download }; },
+    crmExport: async () => { const csv = E.CRM.csv({ prospects: await clients() }), a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'Vereza clients ' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); return { path: a.download }; },
     crmContact: async (how, to) => { const v = String(to || '').trim(); if (how === 'email' && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(v)) location.href = 'mailto:' + v; else if (how === 'phone') location.href = 'tel:' + v.replace(/[^\d+]/g, ''); return true; },
     companies, companyOptions: async () => ({ industries: E.CO.INDUSTRIES, units: E.CO.UNITS }),
     companySave: async (p, makeActive) => { const d = await companies(), c = E.CO.clean(p), i = d.companies.findIndex((x) => x.id === c.id); if (i >= 0) d.companies[i] = c; else d.companies.push(c); if (makeActive) d.active = c.id; await saveCompanies(d); return c; },
-    companyDelete: async (id) => { if (id === 'prime') throw new Error('Prime Digital Connect stays in the list.'); const d = await companies(); d.companies = d.companies.filter((c) => c.id !== id); if (d.active === id) d.active = 'prime'; await saveCompanies(d); return true; },
+    companyDelete: async (id) => { if (id === 'prime') throw new Error('Vereza stays in the list.'); const d = await companies(); d.companies = d.companies.filter((c) => c.id !== id); if (d.active === id) d.active = 'prime'; await saveCompanies(d); return true; },
     companyActivate: async (id) => { const d = await companies(); d.active = id; await saveCompanies(d); return d.companies.find((c) => c.id === id); },
     companyLogo: () => new Promise((ok) => { const i = document.createElement('input'); i.type = 'file'; i.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
       i.onchange = () => { const f = i.files[0]; if (!f) return ok({ canceled: true }); if (f.size > 800 * 1024) return ok({ error: 'Use a logo under 800 KB.' }); const r = new FileReader(); r.onload = () => ok({ logo: String(r.result) }); r.readAsDataURL(f); }; i.click(); }),

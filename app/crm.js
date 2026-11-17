@@ -1,4 +1,4 @@
-// PRIME: PITCH PERFECT, Clients: the CRM. A pipeline board you drag prospects across, a list, the follow-ups due, and
+// Vereza, Clients: the CRM. A pipeline board you drag prospects across, a list, the follow-ups due, and
 // a page per prospect with its people, notes, next steps and kits. Records live on this computer (crm.js in the main
 // process checks and saves them). Uses the window's own helpers from app.js: S, el, $, pages, view, store, toast, route.
 'use strict';

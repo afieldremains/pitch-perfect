@@ -1,4 +1,4 @@
-// PRIME: PITCH PERFECT, My company: who is doing the pitching. A list of company profiles (Prime is always one), the
+// Vereza, My company: who is doing the pitching. A list of company profiles (Vereza is always one), the
 // active one marked, and a page to edit each: what it sells and to whom, its prices, its proof, its voice, colors and
 // logo. Decks, ads and brand kits are written for the active company. Uses app.js helpers: S, el, pages, view, toast, route.
 'use strict';
@@ -11,7 +11,7 @@
   // The company name under the app's name in the rail, so it is always clear who the decks are written for.
   async function chip() {
     const box = document.getElementById('as-company'); if (!box) return;
-    try { const db = await S.companies(), c = db.companies.find((x) => x.id === db.active); box.textContent = c ? c.name : ''; box.title = 'Decks, ads and brand kits are made for ' + (c ? c.name : 'your company') + '. Click to change.'; } catch (e) { box.textContent = ''; }
+    try { const db = await S.companies(), c = db.companies.find((x) => x.id === db.active); box.textContent = c && !c.prime ? c.name : ''; box.title = 'Decks, ads and brand kits are made for ' + (c ? c.name : 'your company') + '. Click to change.'; } catch (e) { box.textContent = ''; }
   }
   window.companyChip = chip; setTimeout(chip, 600);
   window.activeCompany = async () => { const db = await S.companies(); return db.companies.find((x) => x.id === db.active); };
@@ -71,8 +71,8 @@
       try { const out = await S.companySave(c, fresh || db.active === c.id || undefined); toast(out.name + ' saved.' + (fresh ? ' Decks, ads and brand kits are now made for it.' : '')); chip(); location.hash = 'company'; }
       catch (e) { save.disabled = false; toast(errText(e)); } } }, fresh ? 'Save and use this company' : 'Save');
     wrap.append(el('a', { class: 'crm-back', href: '#company' }, '← All companies'),
-      el('div', { class: 'head' }, el('div', {}, el('div', { class: 'eyebrow', text: fresh ? 'New company' : c.prime ? 'The Prime profile' : 'Company profile' }), el('h1', { text: fresh ? 'Add a company' : c.name }))),
-      c.prime ? el('p', { class: 'note', text: 'Prime\'s own decks keep their full Prime design and story. Everything here also feeds the ads, brand kits and the guide.' }) : null,
+      el('div', { class: 'head' }, el('div', {}, el('div', { class: 'eyebrow', text: fresh ? 'New company' : c.prime ? 'The Vereza profile' : 'Company profile' }), el('h1', { text: fresh ? 'Add a company' : c.name }))),
+      c.prime ? el('p', { class: 'note', text: 'Vereza\'s own decks keep their full Vereza design and story. Everything here also feeds the ads, brand kits and the guide.' }) : null,
       el('section', { class: 'card' }, el('h2', { text: 'Who you are' }), field('name', 'Company name', 'Gulf Coast Toyota'),
         el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: 'co-industry', text: 'What kind of business' }), ind, el('datalist', { id: 'co-industries' }, o.industries.map((x) => el('option', { value: x })))), field('city', 'Where', 'Sarasota, FL')),
         el('div', { class: 'grid2' }, field('website', 'Website', 'yourcompany.com'), field('tagline', 'Tagline', 'Short line you are known by')),

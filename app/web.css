@@ -1,4 +1,4 @@
-/* PRIME: PITCH PERFECT on the web: the same notebook, plus the layout a phone needs. */
+/* Vereza on the web: the same notebook, plus the layout a phone needs. */
 .wk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
 .wk-card { display: grid; gap: 6px; text-decoration: none; color: var(--ink); border-top: 6px solid var(--wc); }
 .wk-card b { font: 700 19px/1.2 var(--display); }
