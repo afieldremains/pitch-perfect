@@ -16,7 +16,9 @@ It also makes complete ad campaigns and brand kits, and it keeps your clients, f
 | Windows 10 or 11 | **[PRIME-Pitch-Perfect-Setup.exe](https://github.com/afieldremains/pitch-perfect/raw/main/PRIME-Pitch-Perfect-Setup.exe)** (about 100 MB) |
 | Mac (Apple silicon or Intel) | **[Releases](https://github.com/afieldremains/pitch-perfect/releases/latest)**: choose the `arm64` file for Apple silicon (M1 and newer) or `x64` for Intel |
 
-The current version is 0.31.0. iPhone, iPad and Android are coming as a web app.
+The current version is 0.31.0.
+
+**iPhone, iPad, Android, Chromebook or any browser:** open **[the web app](https://afieldremains.github.io/pitch-perfect/app/)**. On iPhone or iPad, tap Share, then **Add to Home Screen**. On Android, tap the menu, then **Install app**. Your work stays on that device. The web app makes the same any-company decks, ads and brand kits. The Prime-design decks, PowerPoint and video exports are in the desktop app.
 
 Not sure which Mac you have? Open the Apple menu and choose **About This Mac**. If it says "Chip: Apple M…", download Apple silicon. If it says "Processor: Intel", download Intel.
 

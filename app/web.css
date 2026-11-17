@@ -1,0 +1,33 @@
+/* PRIME: PITCH PERFECT on the web: the same notebook, plus the layout a phone needs. */
+.wk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.wk-card { display: grid; gap: 6px; text-decoration: none; color: var(--ink); border-top: 6px solid var(--wc); }
+.wk-card b { font: 700 19px/1.2 var(--display); }
+.wk-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--r); overflow: hidden; border: 1.5px solid var(--edge, var(--line-2)); background: #0B0C10; }
+.wk-deck { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+:root.web .keybtn { display: none; }
+/* Phones and small tablets: the cover becomes a band across the top with the menu scrolling sideways; the page
+   takes the whole width; the guide sits small in the corner and its panels fill the screen. */
+@media (max-width: 760px) {
+  body { flex-direction: column !important; height: auto !important; min-height: 100dvh; }
+  .rail { flex: none !important; width: auto !important; padding: calc(10px + env(safe-area-inset-top)) 12px 10px 20px !important; gap: 8px !important; position: sticky; top: 0; z-index: 30; }
+  .rail .label { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px !important; }
+  .rail .brand { margin: 0 !important; }
+  .rail .new { margin: 0 !important; padding: 8px 12px !important; font-size: 14px !important; }
+  .rail nav { display: flex !important; flex-direction: row !important; gap: 4px !important; overflow-x: auto; width: 100%; scrollbar-width: none; }
+  .rail nav a { white-space: nowrap; padding: 8px 10px !important; }
+  .rail .foot, .rail .dice { display: none !important; }
+  main { margin: 6px !important; border-radius: 6px 16px 16px 6px !important; min-height: 70dvh; overflow: visible !important; }
+  .wrap, .wrap.narrow { padding: 18px 16px 120px !important; max-width: none !important; }
+  h1 { font-size: 30px !important; }
+  .grid2, .crm-grid, .th-picks { grid-template-columns: 1fr !important; }
+  .head { flex-direction: column; align-items: flex-start !important; gap: 10px; }
+  .crm-board { grid-template-columns: repeat(7, 78vw) !important; overflow-x: auto; scroll-snap-type: x mandatory; }
+  .crm-board > * { scroll-snap-align: start; }
+  .co-row, .co-row.two { grid-template-columns: 1fr !important; }
+  #folio { display: none !important; }
+  .buddy { left: auto !important; right: 6px !important; bottom: calc(6px + env(safe-area-inset-bottom)) !important; scale: .5 !important; transform-origin: 100% 100% !important; }
+  .bd-bubble { left: auto !important; right: 40px !important; bottom: 150px !important; width: min(420px, 140vw) !important; font-size: 18px; max-width: none !important; }
+  .bd-panel { position: fixed !important; left: 8px !important; right: 8px !important; bottom: 8px !important; top: auto !important; width: auto !important; max-height: 80dvh !important; scale: 2; transform-origin: 100% 100%; }
+  .bd-tools { left: -60px !important; top: -50px !important; }
+  #toast { bottom: calc(90px + env(safe-area-inset-bottom)) !important; max-width: 90vw; }
+}

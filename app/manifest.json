@@ -1,0 +1,17 @@
+{
+ "name": "PRIME: Pitch Perfect",
+ "short_name": "Pitch Perfect",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#121218",
+ "theme_color": "#121218",
+ "icons": [
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
