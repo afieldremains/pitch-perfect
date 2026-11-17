@@ -47,7 +47,7 @@
     const I = { name: opts.name, website: opts.website || '', city: opts.city || '', notes: opts.notes || '', people: opts.people || '', meeting: opts.meeting || '' };
     log('Researching ' + I.name + ' for ' + Z.name + '. This takes a few minutes; keep this page open.');
     const R = await E.U.research(Z, I, log, '');
-    const B = Object.assign({ engine: 'universal' }, R, { seller: Z }); B.client = Object.assign({ name: I.name, website: I.website, city: I.city }, B.client || {});
+    const B = Object.assign({ engine: 'universal' }, R, { seller: Z }); B.client = Object.assign({ name: I.name, website: I.website, city: I.city }, B.client || {}); delete B.client.logo; // never a logo the model wrote
     log('Building the deck…');
     const deck = await E.U.webDeck(B, {});
     const id = 'k' + Date.now().toString(36), A = B.assessment || {};
@@ -100,6 +100,7 @@
 
   const notHere = (what) => () => Promise.reject(new Error(what + ' is in the desktop app (Windows or Mac).'));
   const impl = {
+    copyText: async (text) => { await navigator.clipboard.writeText(String(text)); return true; },
     web: true,
     settings: async () => ({ hasKey: !!window.ppKey(), kitsDir: 'This device', version: VERSION, encrypted: false, web: true }),
     setKey: async (key) => {

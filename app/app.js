@@ -582,7 +582,7 @@ async function route() {
     if (morph) document.documentElement.classList.add('morphing');
     // A page turn (not a morph): the curl, a sheet laid exactly over the page, shows the turning leaf's back and shadow.
     const curl = document.getElementById('curl'), turn = !morph && motionLevel() === 'full' && uiNow().turn === 'curl' && curl;
-    if (turn) { const r = view.getBoundingClientRect(); Object.assign(curl.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); }
+    if (turn) { const r = view.getBoundingClientRect(), z = parseFloat(document.documentElement.style.zoom) || 1; Object.assign(curl.style, { left: r.left / z + 'px', top: r.top / z + 'px', width: r.width / z + 'px', height: r.height / z + 'px' }); } // the page is zoomed for larger text; the curl sits inside that zoom
     const vt = document.startViewTransition(async () => { await paint(); if (turn) document.documentElement.classList.add('turning'); });
     vt.finished.finally(() => document.documentElement.classList.remove('morphing', 'turning'));
     await vt.updateCallbackDone.catch(() => {});
