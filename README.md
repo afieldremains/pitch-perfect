@@ -1,6 +1,6 @@
-# Vereza
+# PRIO
 
-Vereza is a meeting notebook for any business, made by Vereza (formerly Prime Digital Connect). The app used to be called PRIME: Pitch Perfect.
+PRIO is a meeting notebook for any business, made by **Prio Connect** (formerly Prime Digital Connect). The app used to be called PRIME: Pitch Perfect. **Seek. Find. Grow.**
 
 Set up your company once: what you sell, your prices, your real results, your colors and your logo. Then give it a prospect's name and website. It researches them and builds:
 
@@ -15,22 +15,26 @@ It also makes complete ad campaigns and brand kits, and it keeps your clients, f
 
 | Your computer | Download |
 |---|---|
-| Windows 10 or 11 | **[Vereza-Setup.exe](https://github.com/afieldremains/pitch-perfect/raw/main/Vereza-Setup.exe)** (about 100 MB) |
+| Windows 10 or 11 | **[PRIO-Setup.exe](https://github.com/afieldremains/pitch-perfect/raw/main/PRIO-Setup.exe)** (about 100 MB) |
 | Mac (Apple silicon or Intel) | **[Releases](https://github.com/afieldremains/pitch-perfect/releases/latest)**: choose the `arm64` file for Apple silicon (M1 and newer) or `x64` for Intel |
 
-The current version is 0.34.0.
+The current version is 0.35.0.
 
-The old Windows link (`PRIME-Pitch-Perfect-Setup.exe`) still works and downloads the same installer.
+The older Windows links (`PRIME-Pitch-Perfect-Setup.exe` and `Vereza-Setup.exe`) still work and download this same installer.
 
-**iPhone, iPad, Android, Chromebook or any browser:** open **[the web app](https://afieldremains.github.io/pitch-perfect/app/)**. On iPhone or iPad, tap Share, then **Add to Home Screen**. On Android, tap the menu, then **Install app**. Your work stays on that device. The web app makes the same any-company decks, ads and brand kits. Vereza's own deck design, PowerPoint copies and video exports are in the desktop app.
+**iPhone, iPad, Android, Chromebook or any browser:** open **[the web app](https://afieldremains.github.io/pitch-perfect/app/)**.
+- On iPhone or iPad, tap Share, then **Add to Home Screen**.
+- On Android, tap the menu, then **Install app**.
+
+Your work stays on that device. The web app makes the same any-company decks, ads and brand kits. Prio Connect's own deck design, PowerPoint copies and video exports are in the desktop app.
 
 Not sure which Mac you have? Open the Apple menu and choose **About This Mac**. If it says "Chip: Apple M…", download Apple silicon. If it says "Processor: Intel", download Intel.
 
 ## Install
 
-**Windows:** Open the file. Windows may say "Windows protected your PC", because the app isn't code-signed yet. Click **More info**, then **Run anyway**. Installing over PRIME: Pitch Perfect keeps all your work.
+**Windows:** Open the file. Windows may say "Windows protected your PC", because the app isn't code-signed yet. Click **More info**, then **Run anyway**. Installing over an earlier version keeps all your work.
 
-**Mac:** Open the disk image and drag the app to Applications. The first time you open it, right-click the app, choose **Open**, then choose **Open** again. The app isn't signed by Apple yet. If the Mac says the app "is damaged", open Terminal and run `xattr -cr /Applications/Vereza.app`, then open it again.
+**Mac:** Open the disk image and drag the app to Applications. The first time you open it, right-click the app, choose **Open**, then choose **Open** again. The app isn't signed by Apple yet. If the Mac says the app "is damaged", open Terminal and run `xattr -cr /Applications/PRIO.app`, then open it again.
 
 ## Before your first kit
 
@@ -38,12 +42,13 @@ Research needs an Anthropic API key, the kind that starts with `sk-ant-api03-`. 
 
 ## Where your work lives
 
-New installs save everything in `Documents/Vereza`. If you already used PRIME: Pitch Perfect, the app keeps using `Documents/PRIME Pitch Perfect`, so nothing moves. Nothing is uploaded anywhere else.
+New installs save everything in `Documents/PRIO`. If you used an earlier version, the app keeps using its folder (`Documents/PRIME Pitch Perfect` or `Documents/Vereza`), so nothing moves. Nothing is uploaded anywhere else.
 
-The first time Vereza opens, it rebuilds every kit that has its research under the new name. The old research is kept beside each kit as `research.prime.json`.
+The first time PRIO opens, it rebuilds every kit that has its research so the kit says Prio Connect. The original research is kept beside each kit as `research.prime.json`.
 
 ## Questions
 
-Contact Vereza.
+Jake Satterfield: jake@prioconnect.com, (941) 473-6690
+Greg Satterfield: greg@prioconnect.com, (317) 888-9900
 
-Windows installer SHA-256: `db2870e62ac6695fab3b0c11d9c02efda30fe22d78863117a0af46b67f0e7e36`
+Windows installer SHA-256: `eb7474820bb6c2839b813668cde2c4c6a1ab90d98021fd5ebd09ab63468128ab`
