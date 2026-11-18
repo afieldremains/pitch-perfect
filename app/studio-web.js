@@ -4,7 +4,7 @@
 // the bundled engine (engine.js), and voice uses the browser's own speech recognition.
 'use strict';
 (() => {
-  const E = window.PPE, VERSION = '0.35.0-web';
+  const E = window.PPE, VERSION = '0.37.0-web';
   // ---------- storage: one small key-value store in IndexedDB ----------
   const db = new Promise((ok, bad) => { const r = indexedDB.open('pitch-perfect', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); });
   const tx = async (mode, fn) => { const d = await db; return new Promise((ok, bad) => { const t = d.transaction('kv', mode), s = t.objectStore('kv'), r = fn(s); t.oncomplete = () => ok(r && r.result); t.onerror = () => bad(t.error); }); };

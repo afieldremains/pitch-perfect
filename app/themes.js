@@ -58,7 +58,7 @@ const THEME_PRESETS = [
   ['Farm market', 'Business', '#F4F1E2', '#FFFDF4', '#2F4A1E', '#D9831F', '#1E2614', '#2F6E8C', '#C2412D', '#E0A82E']
 ].map(([name, group, ground, card, rail, accent, ink, blue, red, yellow]) => ({ id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name, group, ground, card, rail, accent, ink, blue, red, yellow }));
 
-const UI_DEFAULTS = { head: 'jakarta', body: 'jakarta', corners: 'soft', paper: 'dots', cover: 'marble', coverColor: '#121218', size: 'normal', turn: 'curl' };
+const UI_DEFAULTS = { head: 'jakarta', body: 'jakarta', corners: 'soft', paper: 'plain', cover: 'marble', coverColor: '#121218', size: 'normal', turn: 'fade' };
 const UI_OPTIONS = {
   fonts: [['jakarta', 'Jakarta', "'Plus Jakarta Sans'"], ['outfit', 'Outfit', "'Outfit'"], ['grotesk', 'Space Grotesk', "'Space Grotesk'"], ['fraunces', 'Fraunces (serif)', "'Fraunces'"], ['dmserif', 'DM Serif (display)', "'DM Serif Display'"], ['segoe', 'Segoe UI', "'Segoe UI'"], ['georgia', 'Georgia', "Georgia"], ['mono', 'Typewriter', "'Cascadia Mono', Consolas, 'Courier New'"]],
   corners: [['sharp', 'Sharp', 4, 3], ['soft', 'Soft', 12, 8], ['round', 'Round', 18, 12], ['pill', 'Extra round', 26, 16]],

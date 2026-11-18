@@ -18,7 +18,7 @@ It also makes complete ad campaigns and brand kits, and it keeps your clients, f
 | Windows 10 or 11 | **[PRIO-Setup.exe](https://github.com/afieldremains/pitch-perfect/raw/main/PRIO-Setup.exe)** (about 100 MB) |
 | Mac (Apple silicon or Intel) | **[Releases](https://github.com/afieldremains/pitch-perfect/releases/latest)**: choose the `arm64` file for Apple silicon (M1 and newer) or `x64` for Intel |
 
-The current version is 0.35.0.
+The current version is 0.37.0.
 
 The older Windows links (`PRIME-Pitch-Perfect-Setup.exe` and `Vereza-Setup.exe`) still work and download this same installer.
 
@@ -51,4 +51,4 @@ The first time PRIO opens, it rebuilds every kit that has its research so the ki
 Jake Satterfield: jake@prioconnect.com, (941) 473-6690
 Greg Satterfield: greg@prioconnect.com, (317) 888-9900
 
-Windows installer SHA-256: `eb7474820bb6c2839b813668cde2c4c6a1ab90d98021fd5ebd09ab63468128ab`
+Windows installer SHA-256: `34905976268bccf45e0cb7c80fd471bf6af0486485156b7cea68aa3ced4d0488`

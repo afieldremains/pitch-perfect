@@ -12,11 +12,13 @@ const store = {
 // ---------- appearance: theme, accent and motion, chosen in Settings and remembered on this computer ----------
 // Three modes: Light (black and white; only the Prio Connect mark and the decks keep their color), Dark (the original
 // Prio Connect look) and Shuffle (a new color scheme every roll, named, always readable).
-const THEMES = [['warm', 'Notebook', 'A composition notebook: marbled cover, dot-grid pages that turn, the three Prio Connect inks'], ['light', 'Light', 'Black on white. Only Prio Connect and the decks in color'], ['black', 'Black', 'White on true black. Only Prio Connect and the decks in color'], ['dark', 'Dark', 'Prio Connect at night: deep navy, no white'], ['shuffle', 'Shuffle', 'A new color scheme every roll'], ['custom', 'Custom', 'Your own colors, or one of 48 ready-made themes']];
+const THEMES = [['studio', 'Studio', 'Paper white and ink. Color only means something: blue to act, red to stop, yellow for what is new'], ['warm', 'Notebook', 'A composition notebook: marbled cover, dot-grid pages that turn, the three Prio Connect inks'], ['light', 'Light', 'Black on white. Only Prio Connect and the decks in color'], ['black', 'Black', 'White on true black. Only Prio Connect and the decks in color'], ['dark', 'Dark', 'Prio Connect at night: deep navy, no white'], ['shuffle', 'Shuffle', 'A new color scheme every roll'], ['custom', 'Custom', 'Your own colors, or one of 48 ready-made themes']];
 const calmOS = matchMedia('(prefers-reduced-motion: reduce)');
 // Warm is the look the app opens in. Anyone coming from an earlier version is moved to it once (and told how to go back).
 if (store.get('look', 0) < 2) { if (store.get('theme', '')) store.set('look.moved', store.get('theme', '')); store.set('theme', 'warm'); store.set('look', 2); }
-const themeNow = () => { const t = store.get('theme', 'warm'); return THEMES.some((x) => x[0] === t) ? t : 'warm'; };
+// Studio is the look the app opens in from 0.36: quiet surfaces, one signal color. Notebook is a click away in Settings.
+if (store.get('look', 0) < 3) { if (store.get('theme', '') && store.get('theme', '') !== 'warm') store.set('look.moved', store.get('theme', '')); store.set('theme', 'studio'); const u = store.get('ui', {}); if (!u.turn || u.turn === 'curl') store.set('ui', Object.assign({}, u, { turn: 'fade', paper: 'plain' })); store.set('look', 3); }
+const themeNow = () => { const t = store.get('theme', 'studio'); return THEMES.some((x) => x[0] === t) ? t : 'studio'; };
 // Warm draws with cut paper and clay where the other modes draw grids and dials.
 const soft = () => themeNow() === 'warm';
 
@@ -1028,7 +1030,7 @@ pages.settings = async () => {
   });
   // Appearance: Light, Dark or Shuffle; every choice applies at once, and is remembered.
   const sc = schemeNow(), V = sc.vars;
-  const MINI = { warm: ['#2A2A2E', '#FDFBF5', '#C9D8EE', '#FAC800'], light: ['#FFFFFF', '#FFFFFF', '#E3E3E3', '#0A0A0A'], black: ['#000000', '#000000', '#262626', '#FFFFFF'], dark: ['#03050A', '#06080F', '#1A2131', '#F7C400'], shuffle: [V.rail, V.ground, V.line, V.accent], custom: (() => { const c = customNow().vars; return [c.rail, c.ground, c.line, c.accent]; })() };
+  const MINI = { studio: ['#FFFFFF', '#F5F5F3', '#E4E4E0', '#2656D9'], warm: ['#2A2A2E', '#FDFBF5', '#C9D8EE', '#FAC800'], light: ['#FFFFFF', '#FFFFFF', '#E3E3E3', '#0A0A0A'], black: ['#000000', '#000000', '#262626', '#FFFFFF'], dark: ['#03050A', '#06080F', '#1A2131', '#F7C400'], shuffle: [V.rail, V.ground, V.line, V.accent], custom: (() => { const c = customNow().vars; return [c.rail, c.ground, c.line, c.accent]; })() };
   const pickTheme = (v, btn) => { store.set('theme', v); if (moving() && document.startViewTransition) setScheme(btn); else { applyLook(); route(); } };
   const themeBtns = THEMES.map(([v, t, d]) => el('button', { class: 'theme' + (v === 'shuffle' ? ' shuffle' : ''), type: 'button', 'aria-pressed': String(themeNow() === v), onclick: (e) => pickTheme(v, e.currentTarget) },
     el('div', { class: 'mini', style: '--mr:' + MINI[v][0] + ';--mw:' + MINI[v][1] + ';--mc:' + MINI[v][2] + ';--ma:' + MINI[v][3] }, el('div', { class: 'r' }), el('div', { class: 'w' }, el('i'), el('i'), el('i')), null),
@@ -1097,7 +1099,7 @@ pages.settings = async () => {
     if (!window.guideMode) return null;
     const G = [['on', 'On'], ['quiet', 'Quiet'], ['off', 'Hidden']];
     const btns = G.map(([v, t]) => el('button', { type: 'button', 'aria-pressed': String(window.guideMode() === v), onclick: () => { window.guideMode(v); btns.forEach((b, i) => b.setAttribute('aria-pressed', String(G[i][0] === v))); } }, t));
-    return el('div', { class: 'field guidepick' }, el('span', { class: 'label', text: 'Your guide' }, el('span', { class: 'hint', text: 'Your guide sits on the notebook cover and points things out as you go. Hover over it to ask, talk, rename or dress it. Quiet: it only talks when you click it.' })), el('div', { class: 'seg', role: 'group', 'aria-label': 'Your guide' }, btns));
+    return el('div', { class: 'field guidepick' }, el('span', { class: 'label', text: 'Your guide' }, el('span', { class: 'hint', text: 'The P in the corner points out the next step when you pause, and can do anything here by voice: hover over it and click the mic. Quiet: it only talks when you click it. On Windows, turn on Voice Access and say "Open PRIO" to start the app by voice.' })), el('div', { class: 'seg', role: 'group', 'aria-label': 'Your guide' }, btns), el('button', { class: 'btn ghost', type: 'button', style: 'margin-top:10px', onclick: () => window.guideTour && window.guideTour() }, 'Replay the tour'));
   }
   const MOTIONS = [['full', 'Full'], ['calm', 'Calm'], ['off', 'Off']];
   const motionBtns = MOTIONS.map(([v, t]) => el('button', { type: 'button', 'aria-pressed': String(motionLevel() === v), onclick: () => { store.set('motion', v); applyLook(); motionBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(MOTIONS[i][0] === v))); if (v === 'full') burst(); } }, t));
@@ -1590,8 +1592,8 @@ $('#dice').addEventListener('click', (e) => rollColors(e.currentTarget)); applyL
 { const nav = $('.rail nav'); if (nav) nav.after(keyed(el('button', { class: 'keybtn', type: 'button', title: 'Every action, kit and setting in one place (Ctrl K)', onclick: () => palette() }, el('span', { text: 'Find anything' }), el('kbd', { text: 'Ctrl K' })))); }
 addEventListener('hashchange', route);
 watchRunning(); refreshCount();
-// On launch: down the rabbit hole, where the Prio Connect P is built as a key, unlocks the door (the Prio Connect tile) and we go
-// through its keyhole into the app (Full motion; Calm skips it, Off shows nothing). The Library is dealt behind it.
+// On launch the I of PRIO launches out of the P's counter and falls behind it; when it lands the O runs left leaving
+// "Ohhhhh!", and the app rolls in as a wave from where it landed (Full motion; Calm skips it, Off shows nothing). The Library is drawn under the wave.
 const splashed = new Promise((done) => {
   const sp = $('#splash'); if (!sp) return done();
   const level = motionLevel(); if (level === 'off') { sp.remove(); return done(); }
@@ -1599,6 +1601,6 @@ const splashed = new Promise((done) => {
   const gone = () => { sp.remove(); removeEventListener('keydown', skip, true); removeEventListener('pointerdown', skip, true); };
   const skip = () => { if (!sp.isConnected) return; sp.classList.add('skip'); done(); setTimeout(gone, 260); };
   addEventListener('keydown', skip, true); addEventListener('pointerdown', skip, true);
-  setTimeout(done, level === 'calm' ? 0 : 4450); setTimeout(gone, level === 'calm' ? 260 : 5600);
+  setTimeout(done, level === 'calm' ? 0 : 3700); setTimeout(gone, level === 'calm' ? 260 : 4650);
 });
 splashed.then(route).then(() => welcome()).then(() => { if (store.get('look.moved', '')) { store.del('look.moved'); setTimeout(() => toast('New look: Notebook. Your earlier one is still in Settings, under Appearance.'), 900); } });
