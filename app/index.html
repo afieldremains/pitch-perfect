@@ -1,40 +1,46 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#121218">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#F5F5F3">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#06080F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="PRIO">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; frame-src 'self' blob: data:; connect-src 'self' https://api.anthropic.com; worker-src 'self'">
 <title>PRIO</title>
 <link rel="stylesheet" href="app.css">
 <link rel="stylesheet" href="web.css">
+<link rel="stylesheet" href="account.css">
+<link rel="stylesheet" href="home.css">
 <script src="engine.js" defer></script>
+<script src="accounts-core.js" defer></script>
 <script src="studio-web.js" defer></script>
-<script src="plates.js" defer></script>
-<script src="logo-schemes.js" defer></script>
-<script src="themes.js" defer></script>
-<script src="app.js" defer></script>
-<script src="pages-web.js" defer></script>
-<script src="crm.js" defer></script>
-<script src="company.js" defer></script>
-<script src="make.js" defer></script>
-<script src="compare.js" defer></script>
-<script src="buddy.js" defer></script>
+<script src="session.js" defer></script>
 </head>
-<body>
+<body data-locked>
+<!-- THESIS: the seller's workspace starts with their own business, not an agency demo.
+OWN-WORLD: the existing paper-and-ink grid, Plus Jakarta Sans, and a single blue action.
+STORY: sign in locally, choose personal or organization use, then name the business.
+FIRST VIEWPORT: the P mark, a clear account heading, and a compact flush-left form.
+FORM: a focused extension of the existing setup flow; no replacement visual identity. -->
+<section id="access" class="access" aria-label="Local account"><p role="status">Opening local accounts...</p></section>
 <aside class="rail">
   <div class="label">
   <div class="brand"><svg class="pmark" viewBox="0 0 304 383" width="24" height="30" aria-hidden="true"><rect width="87" height="383" rx="43.5" style="fill:var(--lg-stem,#2656D9)"/><path fill-rule="evenodd" style="fill:var(--lg-ring,#E22622)" d="M174 0a130 130 0 1 0 0 260a130 130 0 1 0 0-260ZM174 79a51 51 0 1 1 0 102a51 51 0 1 1 0-102Z"/><path style="fill:var(--lg-star,#FAC800)" d="M63 96C66 119 74 127 97 130C74 133 66 141 63 164C60 141 52 133 29 130C52 127 60 119 63 96Z"/></svg><div><b>PRIO</b><span class="eyebrow">Connect</span><a href="#company" class="as-company" id="as-company"></a></div></div>
   <a href="#new" class="new" id="nav-new">+ New prospect</a>
+  <a href="#account" class="account-link">Account</a>
   <nav aria-label="Main">
+    <a href="#home" data-tab="home">Home</a>
     <a href="#library" data-tab="library">Library <span class="count" id="kit-count"></span></a>
     <a href="#compare" data-tab="compare">Compare</a>
     <a href="#crm" data-tab="crm">Clients <span class="count due" id="crm-due" title="Follow-ups due today or late"></span></a>
+        <a href="#crm/targets" data-tab="targets" class="sub">Find targets</a>
     <a href="#ads" data-tab="ads">Ads</a>
+    <a href="#landing" data-tab="landing">Landing pages</a>
+    <a href="#services" data-tab="services">Prio services</a>
     <a href="#brand" data-tab="brand">Brand kits</a>
     <a href="#company" data-tab="company">My company</a>
     <a href="#settings" data-tab="settings">Settings</a>
@@ -52,14 +58,14 @@
      P's counter and lands far back on the ground; it skips forward toward you, leaving C O N N E C T behind it, and the word
      stands up and fills the screen as the app arrives (renderer/intro.js). Any key or click skips it; Calm skips it; Off
      shows nothing. -->
-<div id="splash" class="rk" aria-hidden="true">
+<div id="splash" class="rk" role="region" aria-label="Prio Connect opening">
   <div class="rk-floor"></div>
   <div class="rk-stage">
     <div class="rk-i"><span class="rk-trail"></span></div>
-    <svg class="rk-p" viewBox="0 0 304 383" aria-hidden="true"><rect width="87" height="383" rx="43.5" fill="#2656D9"/><path fill-rule="evenodd" fill="#E22622" d="M174 0a130 130 0 1 0 0 260a130 130 0 1 0 0-260ZM174 79a51 51 0 1 1 0 102a51 51 0 1 1 0-102Z"/><path fill="#FFFFFF" d="M63 96C66 119 74 127 97 130C74 133 66 141 63 164C60 141 52 133 29 130C52 127 60 119 63 96Z"/></svg>
+    <svg class="rk-p" viewBox="0 0 304 383" aria-hidden="true"><rect width="87" height="383" rx="43.5" fill="#2656D9"/><path fill-rule="evenodd" fill="#E22622" d="M174 0a130 130 0 1 0 0 260a130 130 0 1 0 0-260ZM174 79a51 51 0 1 1 0 102a51 51 0 1 1 0-102Z"/><path class="prio-star" fill="#FAC800" d="M63 96C66 119 74 127 97 130C74 133 66 141 63 164C60 141 52 133 29 130C52 127 60 119 63 96Z"/></svg>
     <div class="rk-word" aria-hidden="true">PR<span class="gap">I</span>O</div>
   </div>
+  <button type="button" class="rk-skip">Skip opening</button>
 </div>
-<script src="intro.js"></script>
 </body>
 </html>

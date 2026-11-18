@@ -7,13 +7,13 @@
 (() => {
   'use strict';
   const S = window.studio, root = document.documentElement;
-  const get = (k, d) => { try { const v = localStorage.getItem('pp.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
-  const put = (k, v) => { try { localStorage.setItem('pp.' + k, JSON.stringify(v)); } catch (e) { /* fine */ } };
+  const get = (k, d) => store.get(k, d);
+  const put = (k, v) => store.set(k, v);
   const mode = () => get('guide', 'on'); // on | quiet | off
   // Its name: Prio by default. Earlier versions let people rename and dress it; a name they chose is kept.
   const NAMES = ['Vera', 'Pono', 'Imi', 'Satya', 'Emet', 'Makoto', 'Kweli', 'Zeta', 'Eureka', 'Khoj', 'Arthi', 'Pip'];
   const nm = () => { const n = String(get('guide.name', '') || '').slice(0, 24); return !n || n === 'Vera' ? 'Prio' : n; };
-  const still = () => root.dataset.motion === 'off';
+  const still = () => root.dataset.motion === 'off' || matchMedia('(prefers-reduced-motion: reduce)').matches;
   const h = (tag, cls, kids) => { const n = document.createElement(tag); if (cls) n.className = cls; (kids || []).forEach((k) => n.append(k)); return n; };
 
   // ---------- the creature ----------
@@ -24,7 +24,49 @@
   const torso = h('span', 'bd-stem');
   const star = h('span', 'bd-star', [h('span', 'bd-spark')]);
   const body = h('button', 'bd-body', [h('span', 'bd-shadow'), h('span', 'bd-p', [torso, head]), star]);
-  body.type = 'button'; const labelBody = () => body.setAttribute('aria-label', nm() + ', your guide. Click for a tip.'); labelBody();
+  const mark = h('span', 'bd-mark'); body.querySelector('.bd-p').append(mark);
+  const sculpture = body.querySelector('.bd-p');
+  let selectedMark = get('guide.rotate', true) ? window.PrioMarks.choose(get('guide.last-mark', '')) : get('guide.mark', 'star');
+  put('guide.last-mark', selectedMark);
+  window.guideMark = (id) => {
+    if (id !== undefined && window.PrioMarks.styles.some((s) => s.id === id)) { selectedMark = id; put('guide.mark', id); put('guide.rotate', false); }
+    const selected = selectedMark;
+    const alternate = selected !== 'overlap' && window.PrioMarks.styles.some((s) => s.id === selected);
+    torso.hidden = head.hidden = alternate; mark.hidden = !alternate;
+    body.dataset.mark = selected;
+    star.style.visibility = selected === 'star' ? 'hidden' : '';
+    mark.innerHTML = alternate ? window.PrioMarks.svg(selected, { star: false }) : '';
+    return alternate ? selected : 'overlap';
+  };
+  window.guideRotate = (enabled) => {
+    if (enabled === undefined) return get('guide.rotate', true);
+    put('guide.rotate', enabled === true);
+    if (enabled) { selectedMark = window.PrioMarks.choose(selectedMark); put('guide.last-mark', selectedMark); }
+    else put('guide.mark', selectedMark);
+    return window.guideMark();
+  };
+  window.guideMark();
+  let tiltFrame = 0, entrance = null;
+  const finishEntrance = () => { if (entrance) { entrance.cancel(); entrance = null; } };
+  body.addEventListener('pointermove', (event) => {
+    if (still() || event.pointerType === 'touch') return;
+    cancelAnimationFrame(tiltFrame);
+    const box = body.getBoundingClientRect();
+    const pitch = Math.max(-.25, Math.min(.25, (event.clientY - box.top - box.height / 2) / box.height * .5));
+    const yaw = Math.max(-.25, Math.min(.25, (event.clientX - box.left - box.width / 2) / box.width * .5));
+    tiltFrame = requestAnimationFrame(() => {
+      finishEntrance();
+      if (body.dataset.mark === 'star') mark.innerHTML = window.PrioMarks.star(pitch, yaw);
+      else sculpture.style.transform = 'perspective(240px) rotateX(' + (-pitch * 70) + 'deg) rotateY(' + (yaw * 70) + 'deg)';
+    });
+  });
+  const restMark = () => { cancelAnimationFrame(tiltFrame); finishEntrance(); sculpture.style.transform = ''; if (body.dataset.mark === 'star') mark.innerHTML = window.PrioMarks.star(); };
+  body.addEventListener('pointerleave', restMark);
+  body.addEventListener('pointerdown', restMark);
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', restMark);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) restMark(); });
+  new MutationObserver(() => { if (still()) restMark(); }).observe(root, { attributes: true, attributeFilter: ['data-motion'] });
+  body.type = 'button'; const labelBody = () => body.setAttribute('aria-label', 'Ask ' + nm() + ', your guide'); labelBody();
   // The typed-out text is for the eye; screen readers get the whole message once, from a hidden live region.
   const text = h('p', 'bd-text'), acts = h('div', 'bd-acts'), live = h('span', 'sr-only'); text.setAttribute('aria-hidden', 'true');
   live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite');
@@ -43,7 +85,7 @@
     clearTimeout(hideT); cancelAnimationFrame(typing);
     bubble.hidden = false; buddy.classList.add('talking'); acts.replaceChildren(); live.textContent = ''; requestAnimationFrame(() => { live.textContent = msg; });
     (o.actions || []).forEach(([label, fn]) => { const b = h('button', 'bd-act'); b.type = 'button'; b.textContent = label; b.onclick = () => { closeBubble(); fn(); }; acts.append(b); });
-    if (still()) { text.textContent = msg; buddy.classList.remove('talking'); }
+    if (still() || touring) { text.textContent = msg; buddy.classList.remove('talking'); }
     else { let i = 0; const t0 = performance.now(); const step = (t) => { i = Math.min(msg.length, Math.floor((t - t0) / 18)); text.textContent = msg.slice(0, i); if (i < msg.length) typing = requestAnimationFrame(step); else buddy.classList.remove('talking'); }; typing = requestAnimationFrame(step); }
     if (o.mood) setMood(o.mood, 1600);
     if (o.point) point(o.point);
@@ -52,8 +94,8 @@
   function closeBubble() { if (bubble.contains(document.activeElement)) body.focus(); clearTimeout(hideT); cancelAnimationFrame(typing); buddy.classList.remove('talking'); bubble.hidden = true; }
   bubble.addEventListener('pointerenter', () => clearTimeout(hideT));
   bubble.addEventListener('focusin', () => clearTimeout(hideT));
-  buddy.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !bubble.hidden) { e.stopPropagation(); closeBubble(); body.focus(); } });
-  bubble.addEventListener('pointerleave', () => { if (!bubble.hidden) hideT = setTimeout(closeBubble, 2600); });
+  buddy.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !bubble.hidden) { e.stopPropagation(); if (touring) endTour(); else closeBubble(); body.focus(); } });
+  bubble.addEventListener('pointerleave', () => { if (!bubble.hidden && !touring) hideT = setTimeout(closeBubble, 2600); });
   hush.onclick = closeBubble;
 
   // The star flies to something on the page and circles it, so the guide can show as well as tell.
@@ -90,7 +132,11 @@
       ['Read the cheat sheet before the meeting. It lists the questions they are likely to ask.'],
       ['Add them to Clients so the next step has a date.', { point: '#view button.crm-add, #view .actions .btn' }]
     ],
-    crm: () => (location.hash.split('/')[1] ? [
+    crm: () => (location.hash.split('/')[1] === 'targets' ? [
+      ['Answer the five questions and I will list the kinds of business most likely to need what you sell. Choose Find them on a map to look nearby.', { point: '#view .tg-ask, #view h1' }],
+      ['When you find one, choose Add one you found. It goes into Clients as a lead only after you press Add to Clients.'],
+      ['The list updates every week. Hide a kind with Not for me and it stays out until you bring it back.']
+    ] : location.hash.split('/')[1] ? [
       ['Every client needs a next step and a date. It shows in Follow-ups on the day.', { point: '#c-step' }],
       ['Note what was said after each call. Ctrl+Enter saves.', { point: '#c-note' }]
     ] : [
@@ -127,8 +173,8 @@
   function arrived() {
     if (touring) return; // the tour keeps its place while pages change under it
     closeBubble(); buddy.classList.remove('arrive'); void buddy.offsetWidth; if (!still()) buddy.classList.add('arrive');
-    const key = page() + (page() === 'crm' && location.hash.split('/')[1] ? '/one' : '');
-    if (mode() === 'on' && !seen.has(key)) { seen.add(key); setTimeout(() => tip(true), 700); }
+    const sub = page() === 'crm' ? location.hash.split('/')[1] : '', key = page() + (sub === 'targets' ? '/targets' : sub ? '/one' : '');
+    if (mode() === 'on' && !seen.has(key)) { seen.add(key); setTimeout(() => { if (!touring) tip(true); }, 700); }
   }
 
   // ---------- busy, done, trouble ----------
@@ -158,7 +204,7 @@
 
   body.addEventListener('click', () => {
     buddy.classList.remove('boop'); void body.offsetWidth; buddy.classList.add('boop');
-    if (bubble.hidden || mode() !== 'off') tip(false);
+    askPanel();
   });
 
   // Settings: Guide on, quiet or hidden.
@@ -246,9 +292,10 @@
   let listening = false;
   function stopListening() { if (listening) { listening = false; S.voiceStop && S.voiceStop(); } }
   async function context() {
-    const [kits, clients] = await Promise.all([S.kits().catch(() => []), S.crmList().catch(() => [])]);
+    const [kits, clients, company] = await Promise.all([S.kits(), S.crmList(), window.activeCompany ? window.activeCompany() : null]);
     const next = (p) => (p.tasks || []).filter((k) => !k.done).sort((a, b) => (a.due || '9').localeCompare(b.due || '9'))[0];
-    return { today: new Date().toLocaleDateString('en-CA') + ' (' + new Date().toLocaleDateString('en-US', { weekday: 'long' }) + ')', page: page(), title: title(),
+    return { company: company && { name: company.name, industry: company.industry, offer: company.offer, audience: company.audience, voice: company.voice },
+      today: new Date().toLocaleDateString('en-CA') + ' (' + new Date().toLocaleDateString('en-US', { weekday: 'long' }) + ')', page: page(), title: title(),
       kits: (() => { const c = typeof catalogue === 'function' ? catalogue(kits) : new Map(); return kits.map((g) => (c.get(g.name) ? c.get(g.name) + ' ' : '') + g.name + (g.latest && g.latest.city ? ' (' + g.latest.city + ')' : '')); })(),
       clients: clients.map((p) => { const k = next(p); return p.name + ' [' + p.stage + (p.city ? ', ' + p.city : '') + (k ? ', next: ' + k.text + (k.due ? ' on ' + k.due : '') : '') + ']'; }),
       palettes: typeof LOGO_SCHEMES !== 'undefined' ? LOGO_SCHEMES.map((x) => x.name) : [],
@@ -261,7 +308,7 @@
   const fillSearch = (sel, q) => afterRoute(() => { const i = document.querySelector(sel); if (i) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); i.focus(); } });
   // What each suggested action does. `now` ones run at once; the rest become buttons the user presses.
   const ACT = {
-    go_to: { now: true, run: (a) => { location.hash = a.page || 'library'; } },
+    go_to: { now: true, run: (a) => { location.hash = a.page === 'targets' ? 'crm/targets' : a.page || 'library'; } },
     open_client: { now: true, run: async (a) => { const p = near(await S.crmList(), a.prospect, 'name'); if (p) location.hash = 'crm/' + p.id; else say('I could not find ' + a.prospect + ' in Clients.'); } },
     open_kit: { now: true, run: async (a) => { const g = near(await S.kits(), a.name, 'name'); if (g) location.hash = 'kit/' + encodeURIComponent(g.latest.dir); else say('I could not find a kit for ' + a.name + '.'); } },
     search: { now: true, run: (a) => { if (a.where === 'clients') { location.hash = 'crm'; fillSearch('#view input[aria-label="Search clients"]', a.query); } else { location.hash = 'library'; fillSearch('#view input[aria-label="Search the library"]', a.query); } } },
@@ -275,6 +322,13 @@
     rehearse: { now: true, run: async (a) => { const g = near(await S.kits(), a.name, 'name'); if (!g) return say('I could not find a kit for ' + a.name + '.'); location.hash = 'kit/' + encodeURIComponent(g.latest.dir); setTimeout(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' })), 1400); } },
     compare: { label: (a) => 'Compare ' + (a.items || []).join(', '), run: (a) => { store.set('cmp.draft', { what: (a.items || []).join(', '), priorities: a.priorities || [], notes: a.notes || '' }); if (a.start) store.set('cmp.autostart', true); location.hash = 'compare'; } },
     start_tour: { now: true, run: () => setTimeout(() => window.guideTour(), 300) },
+    set_presentation_audio: { label: (a) => 'Apply ' + a.sound + ' sounds and ' + a.music + ' music to ' + a.name, run: async (a) => {
+      const matches = (await S.kits()).filter((kit) => kit.name.trim().toLowerCase() === String(a.name || '').trim().toLowerCase());
+      if (matches.length !== 1) throw new Error('Use the exact Library name of one saved kit.');
+      const kit = matches[0].latest, data = await S.presentationGet(kit.dir);
+      await S.presentationSave(kit.dir, { ...data.options, sound: a.sound, music: a.music, musicSeed: typeof a.theme === 'string' ? a.theme : data.options.musicSeed }, {});
+      toast('Saved the optional deck audio. Enable audio when presenting to hear it.');
+    } },
     add_note: { label: (a) => 'Add the note to ' + a.prospect, run: async (a) => { const p = near(await S.crmList(), a.prospect, 'name'); if (!p) return say('I could not find ' + a.prospect + ' in Clients. Add them first.');
       p.notes = p.notes || []; p.notes.push({ kind: 'note', text: a.text, at: new Date().toISOString() }); await S.crmSave(p); toast('Note added to ' + p.name + '.'); } },
     add_prospect: { label: (a) => 'Add ' + a.name + ' to Clients', run: async (a) => { const p = await S.crmSave({ name: a.name, city: a.city || '', website: a.website || '', stage: a.stage || 'lead', notes: a.note ? [{ kind: 'note', text: a.note, at: new Date().toISOString() }] : [] }); if (window.crmRefreshDue) window.crmRefreshDue(); toast(a.name + ' added to Clients.'); location.hash = 'crm/' + p.id; } },
@@ -299,6 +353,7 @@
   const clean = (e) => String(e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
 
   function askPanel(voice, memo) {
+    if (touring) endTour();
     const log = h('div', 'bd-log'); log.setAttribute('aria-live', 'polite'); panelLog = log;
     const entry = (who, text, acts) => { const m = h('div', 'bd-msg ' + who, [Object.assign(h('p'), { textContent: text })]); if (acts && acts.length) m.append(h('div', 'bd-acts', acts)); log.append(m); log.scrollTop = log.scrollHeight; return m; };
     history.slice(-6).forEach((m) => entry(m.role === 'user' ? 'me' : 'it', m.text));
@@ -319,8 +374,14 @@
       const btns = [];
       for (const a of r.actions || []) { const A = ACT[a.name]; if (!A) continue; const input = a.input || {};
         // Safe ones run at once; the rest wait for a click, unless the person already said yes out loud or in writing.
-        if (A.now || input.confirmed === true || ((a.name === 'build_kit' || a.name === 'compare') && input.start === true)) { try { await A.run(input); } catch (e) { /* the reply still shows */ } }
-        else { const b = h('button', 'bd-act'); b.type = 'button'; b.textContent = A.label(input); b.onclick = async () => { b.disabled = true; try { await A.run(input); b.textContent = 'Done'; } catch (e) { b.disabled = false; toast(clean(e)); } }; btns.push(b); } }
+        if (A.now || input.confirmed === true || ((a.name === 'build_kit' || a.name === 'compare') && input.start === true)) { try { await A.run(input); } catch (e) { entry('it', 'That action could not finish: ' + clean(e)); } }
+        else { const b = h('button', 'bd-act'); b.type = 'button'; b.textContent = A.label(input);
+          // While it works the button keeps focus (aria-disabled, not disabled), so Escape still closes the panel.
+          b.onclick = async () => { if (b.getAttribute('aria-disabled') === 'true') return;
+            const label = b.textContent; b.setAttribute('aria-disabled', 'true'); b.setAttribute('aria-busy', 'true'); b.textContent = 'Working';
+            try { await A.run(input); b.textContent = 'Done'; const had = document.activeElement === b; b.disabled = true; if (had && !panel.hidden) q.focus(); }
+            catch (e) { b.textContent = label; b.removeAttribute('aria-disabled'); toast(clean(e)); } finally { b.removeAttribute('aria-busy'); } };
+          btns.push(b); } }
       const reply = r.reply || (btns.length ? 'Here you go.' : 'Done.');
       entry('it', reply, btns); history.push({ role: 'assistant', text: reply });
       await speak(reply);
@@ -384,24 +445,32 @@
   const stir = () => { idleSince = Date.now(); if (!touring && buddy.classList.contains('roam') && Date.now() - roamT0 > 2500) home(); };
   ['pointermove', 'keydown', 'wheel', 'pointerdown'].forEach((t) => addEventListener(t, stir, { passive: true, capture: true }));
   const byText = (sel, re) => [...document.querySelectorAll(sel)].find((n) => re.test(n.textContent.trim()) && n.offsetParent);
+  function resetPosition() {
+    gx = gy = 0; buddy.style.removeProperty('--gx'); buddy.style.removeProperty('--gy');
+    buddy.classList.remove('roam', 'right', 'high');
+  }
   function nextStep() {
     const pg = page(), v = (x) => document.querySelector(x);
     if (pg === 'library') return kitCount() ? { el: v('#view .kitcard'), text: 'Pick up where you left off: open a kit to review the deck, or press R inside it to rehearse.' } : { el: v('#nav-new'), text: 'Nothing here yet. Start with a prospect; a name and a website is all I need.' };
     if (pg === 'new') { const i = v('#view input'); return i && !i.value.trim() ? { el: i, text: 'Type the business name here, or click the mic on me and say it.' } : { el: byText('#view button', /Build the kit/), text: 'When the details look right, build the kit. It takes a few minutes; you can leave this page.' }; }
     if (pg === 'kit') return { el: byText('#view button', /^Rehearse/), text: 'Run it once before the meeting. The talk track and a clock sit beside each slide.' };
+    if (pg === 'crm' && location.hash.split('/')[1] === 'targets') return { el: v('#view .tg-ask[open] button[type=submit]') || v('#view .tg-card'), text: v('#view .tg-card') ? 'Pick one kind of business, open it on the map and see who you find. Add the ones that look right to Clients.' : 'Answer the five questions, then press the button to see your list.' };
     if (pg === 'crm') return { el: v('#c-step') || v('#view h1'), text: 'Anyone without a next step and a date goes cold. Give each client one.' };
     if (pg === 'compare') { const w = v('#cmp-what'); return w && !w.value.trim() ? { el: w, text: 'Type what they are choosing between, or click the mic on me and say it.' } : { el: byText('#view button', /Make the comparison/), text: 'Ready when you are. The table appears in seconds and fills in while you talk with them.' }; }
     const t = (TIPS[pg] || TIPS.library)()[0]; return t ? { el: t[1] && t[1].point ? v(t[1].point) : null, text: t[0] } : null;
   }
   function moveTo(el) {
     if (!el || still()) return false; const r = el.getBoundingClientRect(); if (!r.width) return false;
-    const B = buddy.getBoundingClientRect(), hx = B.left - gx, hy = B.top - gy;
+    const B = buddy.getBoundingClientRect();
     let x = r.right + 14, y = r.top + r.height / 2 - B.height / 2; if (x + B.width > innerWidth - 8) x = r.left - B.width - 14;
     x = Math.max(8, Math.min(innerWidth - B.width - 8, x)); y = Math.max(8, Math.min(innerHeight - B.height - 8, y));
-    gx = x - hx; gy = y - hy; buddy.style.setProperty('--gx', gx + 'px'); buddy.style.setProperty('--gy', gy + 'px');
+    if (matchMedia('(max-width: 640px)').matches) { gx = x; gy = y; }
+    else { gx = x - (B.left - gx); gy = y - (B.top - gy); }
+    buddy.style.setProperty('--gx', gx + 'px'); buddy.style.setProperty('--gy', gy + 'px');
     buddy.classList.add('roam'); buddy.classList.toggle('right', x > innerWidth - 440); buddy.classList.toggle('high', y < 240); roamT0 = Date.now(); return true;
   }
-  function home() { gx = gy = 0; buddy.style.removeProperty('--gx'); buddy.style.removeProperty('--gy'); buddy.classList.remove('roam', 'right', 'high'); clearTimeout(hideT); hideT = setTimeout(closeBubble, 4000); }
+  function home() { resetPosition(); clearTimeout(hideT); hideT = setTimeout(closeBubble, 4000); }
+  addEventListener('resize', () => { if (buddy.classList.contains('roam')) resetPosition(); }, { passive: true });
   setInterval(() => {
     if (mode() !== 'on' || buddy.hidden || document.hidden || busy() || !panel.hidden || !bubble.hidden || touring || hfLive || document.querySelector('.present, .studio, .welcome')) return;
     if (Date.now() - idleSince < 20000 || Date.now() - roamedAt < 75000) return;
@@ -411,24 +480,32 @@
 
   // ---------- the first time the app opens: a short tour ----------
   const STEPS = [
-    ['#nav-new', 'This is PRIO. Every meeting starts here: name a prospect and I research them, then build the deck, the talk track and the leave-behind.'],
+    ['#nav-new', 'Welcome. I am your guide. I will show you how to make a presentation, save it and share it. Nothing is built or paid for during this tour. You can stop at any time.'],
     [null, 'First, make it comfortable to read. Pick a text size; you can change it later in Settings.', 'size'],
-    ['.rail nav a[data-tab="library"]', 'Every kit lands in the Library, with its versions.'],
-    ['.rail nav a[data-tab="crm"]', 'Clients is your pipeline. Every prospect gets a next step and a date.'],
-    ['.rail nav a[data-tab="ads"]', 'Ads and Brand kits make campaigns and identities, for Prio Connect or for a client.'],
-    ['.rail nav a[data-tab="company"]', 'My company holds what you sell and the proof behind it. Decks are written from it.'],
-    ['.keybtn', 'Ctrl K finds anything. Ctrl J asks me.'],
-    [null, 'You never have to type. Click the mic on me and say "Build a deck for Joe\'s Pizza in Venice." I ask for what I need, then build it. On Windows you can open PRIO by voice too: turn on Voice Access and say "Open PRIO".']
+    ['.rail nav a[data-tab="company"]', 'My company holds your business details. Check what you sell, your contact details and your logo. PRIO uses this business when making your work.'],
+    ['.rail nav a[data-tab="settings"]', 'AI research needs an Anthropic research key in Settings. It is a paid service you connect yourself. You can use Clients, the landing-page builder and existing presentations without one.'],
+    ['#nav-new', 'New prospect starts a presentation. Enter the business name and website, review the details, then choose Build the kit. A kit means the presentation plus your speaking notes and handout.'],
+    ['.rail nav a[data-tab="library"]', 'Library keeps your presentations. Open one to edit its words, try the preview or present full screen. Share presentation saves an audience copy without your private speaking notes.'],
+    ['.rail nav a[data-tab="ads"]', 'Ads makes campaign ideas and creative. Landing pages makes a simple web page with one action button. Prio services is for paid advertising help when payment setup is connected; it does not charge you during this tour.'],
+    [null, 'Need help? Click the small star and type what you want to do. The microphone is optional. I ask before building or changing your work. You can replay this tour in Settings.']
   ];
-  const endTour = () => { touring = false; put('guide.toured', true); home(); };
+  let tourTimer = 0, tourVersion = 0;
+  const endTour = () => { clearTimeout(tourTimer); tourVersion++; touring = false; put('guide.toured', true); bubble.removeAttribute('aria-label'); closeBubble(); resetPosition();
+    // Someone who has just been shown around does not need Home's "New in" note for this version.
+    if (!get('whatsNew.seen', null)) Promise.resolve(S.settings()).then((s) => { if (s && s.version) put('whatsNew.seen', s.version); }).catch(() => {}); };
   function tour(i) {
+    clearTimeout(tourTimer); const version = ++tourVersion;
     touring = true; const [sel, text, kind] = STEPS[i], last = i === STEPS.length - 1, el = sel && document.querySelector(sel);
     const size = (v) => () => { try { store.set('ui', Object.assign({}, store.get('ui', {}), { size: v })); applyLook(); } catch (e) { /* the web build may not have it */ } tour(i + 1); };
-    if (!(el && moveTo(el))) { gx = gy = 0; buddy.style.removeProperty('--gx'); buddy.style.removeProperty('--gy'); buddy.classList.remove('roam', 'right', 'high'); }
-    setTimeout(() => say(text, { point: el || undefined, stay: true, actions: last
-      ? [['Try talking', () => { endTour(); askPanel(true); }], ['Done', endTour]]
-      : kind === 'size' ? [['Normal', size('normal')], ['Larger', size('large')], ['Largest', size('xl')]]
-      : [['Next', () => tour(i + 1)], ['Skip the tour', endTour]] }), el ? 1100 : 400);
+    if (!(el && moveTo(el))) resetPosition();
+    const actions = last ? [['Ask the guide', () => { endTour(); askPanel(false); }], ['Finish the tour', endTour]]
+      : kind === 'size' ? [['Normal', size('normal')], ['Larger', size('large')], ['Largest', size('xl')], ['Skip the tour', endTour]]
+      : [['Next', () => tour(i + 1)], ...(i ? [['Back', () => tour(i - 1)]] : []), ['Skip the tour', endTour]];
+    tourTimer = setTimeout(() => {
+      if (!touring || version !== tourVersion) return;
+      bubble.setAttribute('aria-label', 'Getting started: step ' + (i + 1) + ' of ' + STEPS.length);
+      say('Step ' + (i + 1) + ' of ' + STEPS.length + '. ' + text, { point: el || undefined, stay: true, actions });
+    }, root.dataset.motion === 'off' || matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : el ? 1100 : 400);
   }
   hush.onclick = () => { if (touring) endTour(); closeBubble(); };
   window.guideTour = () => { if (mode() === 'off') { put('guide', 'on'); apply(); } closePanel(); tour(0); };
@@ -443,7 +520,11 @@
     addEventListener('hashchange', () => setTimeout(arrived, 450));
     const sp = document.getElementById('splash');
     // At the end of the opening Prio Connect hops up out of the notebook page; after that it greets the first page.
-    const enter = () => { buddy.classList.add('born'); setTimeout(arrived, 900); tourWhenReady(); };
+    const enter = () => {
+      buddy.classList.add('born');
+      if (!still()) entrance = sculpture.animate([{ transform: 'perspective(240px) rotateY(-16deg) scale(.92)', opacity: .35 }, { transform: 'perspective(240px) rotateY(0deg) scale(1)', opacity: 1 }], { duration: root.dataset.motion === 'calm' ? 180 : 360, easing: 'ease-out' });
+      setTimeout(arrived, 900); tourWhenReady();
+    };
     if (sp) { let on = false; const go = () => { if (!on) { on = true; enter(); } }; setTimeout(go, root.dataset.motion === 'calm' ? 300 : 4700); const t = setInterval(() => { if (!document.getElementById('splash')) { clearInterval(t); go(); } }, 120); } else enter();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

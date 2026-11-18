@@ -10,16 +10,16 @@
     parent.postMessage({ ready: 1 }, '*');
     return;
   }
-  var id = decodeURIComponent(location.hash.slice(1)), r = indexedDB.open('pitch-perfect', 1);
+  var id = decodeURIComponent(location.hash.slice(1));
   var fail = function () { document.body.innerHTML = '<p style="color:#fff;font:16px sans-serif;padding:20px">That deck is not on this device.</p>'; };
-  r.onerror = fail;
-  r.onsuccess = function () {
-    var t = r.result.transaction('kv', 'readonly').objectStore('kv').get('kit:' + id);
-    t.onerror = fail;
-    t.onsuccess = function () {
-      var k = t.result; if (!k || !k.deck) return fail();
+  var source = parent !== window ? parent : opener;
+  var api;
+  try { api = source && source.studio; } catch (e) { /* a different-origin parent has no access to the local workspace */ }
+  if (!api) { if (document.body) fail(); else addEventListener('DOMContentLoaded', fail); return; }
+  api.webKit(id).then(function (k) {
+      if (!k || !k.deck) return fail();
       var f = document.createElement('iframe');
-      f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('allow', 'fullscreen'); f.title = 'Deck';
+      f.setAttribute('sandbox', 'allow-scripts allow-popups allow-popups-to-escape-sandbox'); f.setAttribute('allow', 'fullscreen'); f.title = 'Deck';
       f.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0';
       f.src = 'viewer.html?frame';
       addEventListener('message', function (e) {
@@ -28,6 +28,5 @@
         else if (e.source === parent && parent !== window) f.contentWindow.postMessage(e.data, '*'); // the app driving the deck
       });
       if (document.body) document.body.appendChild(f); else addEventListener('DOMContentLoaded', function () { document.body.appendChild(f); });
-    };
-  };
+  }).catch(fail);
 })();

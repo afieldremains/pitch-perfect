@@ -1,0 +1,51 @@
+/* Home: flush left, one accent (the New prospect action), no shadows or motion. */
+.home-page { max-width: 860px; }
+.home-page .btn { box-shadow: none; min-height: 44px; }
+.home-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+.home-head .pmark { width: 28px; height: 35px; flex: 0 0 auto; margin-top: 6px; }
+.home-head h1 { margin: 0 0 8px; }
+.home-lead { color: var(--muted); line-height: 1.6; margin: 0; }
+.home-build { border-left: 3px solid var(--blue); padding: 8px 0 8px 14px; margin: 0 0 24px; line-height: 1.6; overflow-wrap: anywhere; }
+.home-build a { color: var(--link); font-weight: 600; }
+.home-new { border-top: 1px solid var(--line-2); padding-top: 16px; margin: 0 0 24px; }
+.home-new h2 { display: flex; align-items: center; gap: 10px; font-size: 18px; margin: 0 0 8px; }
+.home-new h2::before { content: ''; flex: none; width: 10px; height: 10px; background: var(--yellow); }
+.home-new ul { margin: 0 0 12px; padding-left: 20px; line-height: 1.6; }
+.home-new li + li { margin-top: 4px; }
+.home-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.home-action { display: grid; gap: 6px; align-content: start; min-height: 44px; padding: 18px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); text-decoration: none; }
+.home-action b { font-size: 18px; }
+.home-action span { color: var(--muted); line-height: 1.5; font-size: 14px; }
+.home-action:hover { border-color: var(--ink); }
+.home-action.primary { background: var(--blue); border-color: var(--blue); color: #FFFFFF; }
+.home-action.primary span { color: #FFFFFF; }
+.home-guide { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 0 0 32px; }
+.home-game { border-top: 1px solid var(--line); padding-top: 24px; }
+.home-game h2 { font-size: 20px; margin: 0 0 6px; }
+.home-rules, .home-note { color: var(--muted); line-height: 1.6; margin: 0 0 12px; }
+.home-note { font-size: 14px; margin-top: 16px; }
+.home-status { font-weight: 600; margin: 0 0 16px; min-height: 1.5em; }
+.home-game-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.home-ttt { display: grid; grid-template-columns: repeat(3, 72px); gap: 6px; }
+.home-cell { width: 72px; height: 72px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); font-family: inherit; font-size: 28px; font-weight: 600; line-height: 1; cursor: pointer; }
+.home-cell:disabled { cursor: default; color: var(--ink); opacity: 1; }
+.home-cell.win { background: var(--yellow); color: #111114; border-color: var(--yellow); }
+.home-c4 { display: grid; grid-template-columns: repeat(7, minmax(44px, 52px)); gap: 4px; }
+.home-col { display: grid; gap: 4px; min-width: 44px; min-height: 44px; padding: 4px; border: 1px solid var(--line-2); background: var(--card); cursor: pointer; }
+.home-col:hover:not(:disabled) { border-color: var(--ink); }
+.home-col:disabled { cursor: default; }
+.home-disc { display: block; aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--line); }
+.home-disc.you { background: var(--ink); border-color: var(--ink); }
+.home-disc.guide { border: 3px solid var(--ink); }
+.home-disc.win { outline: 3px solid var(--yellow); outline-offset: 1px; }
+.home-pile { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+.home-stones { display: flex; flex-wrap: wrap; gap: 6px; max-width: 320px; margin-bottom: 16px; min-height: 12px; }
+.home-stones i { width: 12px; height: 12px; background: var(--ink); }
+.home-takes { display: flex; flex-wrap: wrap; gap: 12px; }
+.home-page :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.home-page, .home-page * { animation: none !important; transition: none !important; }
+@media (max-width: 760px) { .home-actions { grid-template-columns: 1fr; } }
+@media (max-width: 480px) {
+  .home-page.wrap { padding: 24px 16px 40px; }
+  .home-c4 { grid-template-columns: repeat(7, minmax(44px, 1fr)); }
+}

@@ -2,11 +2,12 @@
 'use strict';
 
 const S = window.studio;
-const RUN_COST = 'about 7 minutes and about $2 of research';
+const RUN_COST = 'Research time and API cost depend on the prospect and sources';
+const preferenceKey = (k) => 'pp.' + (window.prioSession && !window.prioSession.workspace.legacy ? window.prioSession.workspace.id + '.' : '') + k;
 const store = {
-  get(k, d) { try { const v = localStorage.getItem('pp.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem('pp.' + k, JSON.stringify(v)); } catch (e) { /* ignore */ } },
-  del(k) { try { localStorage.removeItem('pp.' + k); } catch (e) { /* ignore */ } }
+  get(k, d) { try { const v = localStorage.getItem(preferenceKey(k)); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(preferenceKey(k), JSON.stringify(v)); } catch (e) { /* ignore */ } },
+  del(k) { try { localStorage.removeItem(preferenceKey(k)); } catch (e) { /* ignore */ } }
 };
 
 // ---------- appearance: theme, accent and motion, chosen in Settings and remembered on this computer ----------
@@ -18,6 +19,7 @@ const calmOS = matchMedia('(prefers-reduced-motion: reduce)');
 if (store.get('look', 0) < 2) { if (store.get('theme', '')) store.set('look.moved', store.get('theme', '')); store.set('theme', 'warm'); store.set('look', 2); }
 // Studio is the look the app opens in from 0.36: quiet surfaces, one signal color. Notebook is a click away in Settings.
 if (store.get('look', 0) < 3) { if (store.get('theme', '') && store.get('theme', '') !== 'warm') store.set('look.moved', store.get('theme', '')); store.set('theme', 'studio'); const u = store.get('ui', {}); if (!u.turn || u.turn === 'curl') store.set('ui', Object.assign({}, u, { turn: 'fade', paper: 'plain' })); store.set('look', 3); }
+if (window.prioAccessTheme) { store.set('theme', window.prioAccessTheme); delete window.prioAccessTheme; }
 const themeNow = () => { const t = store.get('theme', 'studio'); return THEMES.some((x) => x[0] === t) ? t : 'studio'; };
 // Warm draws with cut paper and clay where the other modes draw grids and dials.
 const soft = () => themeNow() === 'warm';
@@ -340,14 +342,12 @@ function liveCover() {
   return { box, update };
 }
 
-// ---------- a turn of a key unlocks everything ----------
-// The Prio Connect P is a key (its ring the bow, its stem the blade), as in the opening. Buttons that unlock something (build,
-// present, save to the deck, check the key, refresh the decks) carry it; pressing one turns the key with a click before
-// the action runs. Ctrl K, the key to every action, wears it too.
+// The upright P identifies the app's primary actions.
 function keyGlyph(cls) {
-  const svgNS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('viewBox', '0 0 48 24'); svg.setAttribute('class', 'kg' + (cls ? ' ' + cls : '')); svg.setAttribute('aria-hidden', 'true');
-  svg.innerHTML = '<g class="kg-k"><rect x="15" y="9" width="30" height="6" rx="3" fill="#2F63FF"/><rect x="35" y="14" width="3.2" height="5" rx="1" fill="#2F63FF"/><rect x="40.4" y="14" width="3.2" height="6.5" rx="1" fill="#2F63FF"/><circle cx="10" cy="12" r="6.6" fill="none" stroke="#E1251B" stroke-width="5"/><path d="M10 9.4l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7z" fill="#fff"/></g>';
+  const holder = document.createElement('span'); holder.innerHTML = window.PrioMarks.svg('overlap');
+  const svg = holder.firstElementChild;
+  svg.setAttribute('class', 'kg' + (cls ? ' ' + cls : '')); svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = '<g class="kg-k">' + svg.innerHTML + '</g>';
   return svg;
 }
 const keyed = (btn) => { btn.classList.add('keyed'); btn.prepend(keyGlyph()); return btn; };
@@ -549,6 +549,10 @@ function libraryStats(all) {
 // ---------- pages ----------
 const view = $('#view'), pages = {};
 let leave = null;
+let routeTransition = null, routeVersion = 0;
+// A page owns the view only while it is the latest route. Call at the page's start (before any await); a page that
+// waited for data checks the returned test before drawing, so a page the user already left never draws over the next.
+const routeOwner = () => { const v = routeVersion; return () => v === routeVersion; };
 // Page changes cross-fade; a kit opened from its Library cover morphs from that cover into the deck (view transitions).
 let morph = false;
 // ---------- the prospect's name, dot to dot ----------
@@ -590,14 +594,27 @@ function pageName(text, drawing) {
 }
 
 async function route() {
+  const version = ++routeVersion;
+  if (routeTransition) {
+    const previous = routeTransition;
+    previous.skipTransition();
+    await previous.finished.catch(() => {});
+    if (version !== routeVersion) return;
+    if (routeTransition === previous) routeTransition = null;
+  }
   if (leave) { leave(); leave = null; }
   pageName('');
   const h = location.hash.slice(1), [page, ...rest] = h.split('/');
-  let name = pages[page] ? page : '';
-  if (!name) { const all = await S.kits(); name = all.length || (await S.starterKits().catch(() => [])).length ? 'library' : 'new'; }
+  const name = pages[page] ? page : 'home';
   const paint = async () => {
+    if (version !== routeVersion) return;
     $('#nav-new').classList.toggle('on', name === 'new');
-    document.querySelectorAll('.rail nav a').forEach((a) => a.classList.toggle('on', a.dataset.tab === (name === 'kit' ? 'library' : name)));
+    const tab = name === 'kit' ? 'library' : name === 'crm' && rest[0] === 'targets' ? 'targets' : name;
+    document.querySelectorAll('.rail nav a, .mobile-tabs a').forEach((a) => {
+      const current = a.dataset.tab === tab || (tab === 'targets' && a.dataset.tab === 'crm' && !!a.closest('.mobile-tabs'));
+      a.classList.toggle('on', current);
+      if (current) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
     view.replaceChildren(); view.scrollTop = 0;
     await pages[name](decodeURIComponent(rest.join('/')));
   };
@@ -608,7 +625,8 @@ async function route() {
     const curl = document.getElementById('curl'), turn = !morph && motionLevel() === 'full' && uiNow().turn === 'curl' && curl;
     if (turn) { const r = view.getBoundingClientRect(), z = parseFloat(document.documentElement.style.zoom) || 1; Object.assign(curl.style, { left: r.left / z + 'px', top: r.top / z + 'px', width: r.width / z + 'px', height: r.height / z + 'px' }); } // the page is zoomed for larger text; the curl sits inside that zoom
     const vt = document.startViewTransition(async () => { await paint(); if (turn) document.documentElement.classList.add('turning'); });
-    vt.finished.finally(() => document.documentElement.classList.remove('morphing', 'turning'));
+    routeTransition = vt;
+    vt.finished.finally(() => { if (routeTransition === vt) routeTransition = null; document.documentElement.classList.remove('morphing', 'turning'); });
     await vt.updateCallbackDone.catch(() => {});
     vt.finished.finally(() => { morph = false; document.querySelectorAll('[style*="view-transition-name"]').forEach((n) => { n.style.viewTransitionName = ''; }); });
   } else { await paint(); morph = false; if (moving() && view.firstElementChild) view.firstElementChild.classList.add('enter'); }
@@ -661,10 +679,12 @@ async function refreshCount() { const all = await S.kits(); $('#kit-count').text
 // New prospect: the same fields as the New prospect form on GitHub.
 const BIBLES = ['NIV', 'ESV', 'NASB', 'NKJV', 'KJV', 'CSB', 'NLT', 'NABRE'];
 pages.new = async () => {
+  const owns = routeOwner();
   // Who is pitching: Prio Connect gets its own options (faith model, Bible, pilot); any other company gets its own kit.
   const co = window.activeCompany ? await window.activeCompany().catch(() => null) : null, isPrime = !co || co.prime;
   const set = await S.settings();
-  const d = Object.assign({ type: 'auto', model: 'auto', bible: 'auto', design: 'abstract' }, store.get('draft', {}));
+  if (!owns()) return;
+  const d = Object.assign({ type: 'auto', model: 'auto', bible: 'auto', design: 'abstract', researchMode: 'focused' }, store.get('draft', {}));
   const live = liveCover(), inputs = {};
   const save = () => { store.set('draft', d); live.update(d); };
   const field = (id, label, o = {}) => {
@@ -699,7 +719,7 @@ pages.new = async () => {
     if (!navigator.onLine) { toast('This computer is offline. The research needs the internet: connect, then build the kit.'); return; }
     btn.disabled = true; btn.textContent = 'Starting…';
     const input = { name: d.name, website: d.website, city: d.city, hq: d.hq, area: d.area, offer: d.offer, people: d.people, logo: d.logo, logoFile: d.logoFile, photos: d.photos, social: d.social, notes: d.notes,
-      type: d.type, model: d.model, design: d.design || 'abstract', bible: d.model === 'secular' ? 'auto' : d.bible, meeting: d.meeting, kickoff: d.kickoff, fee: d.fee };
+      type: d.type, model: d.model, design: d.design || 'abstract', researchMode: d.researchMode, bible: d.model === 'secular' ? 'auto' : d.bible, meeting: d.meeting, kickoff: d.kickoff, fee: d.fee };
     try { await S.start(input); store.del('draft'); location.hash = 'run'; } catch (e) { btn.disabled = false; btn.replaceChildren(keyGlyph(), 'Build the kit'); toast(errText(e)); }
   }
   view.append(el('div', { class: 'wrap' },
@@ -710,6 +730,8 @@ pages.new = async () => {
       field('name', 'Who are we meeting?', { big: true, ph: 'Prospect name', on: (i) => { if (urlish(i.value) && !d.website) { d.website = inputs.website.value = i.value.trim(); d.name = i.value = ''; save(); toast('Moved the link to Website. Now their name?'); } } }),
       el('div', { class: 'grid2' }, field('website', 'Website', { ph: 'kingdomroofinginc.com', url: true, hint: 'The research reads their site first: logo, colors, photos.' }), field('city', 'City and state', { ph: 'Venice, FL' }))),
     isPrime ? null : el('div', { class: 'note co-as' }, 'Pitching as ', el('b', { text: co.name }), '. The deck, talk track and leave-behind use its offer, prices, proof, voice and colors. ', el('a', { href: '#company' }, 'Change')),
+    el('section', { class: 'card' }, seg('researchMode', 'Research depth', [['focused', 'Focused'], ['deep', 'Deep']]),
+      el('p', { class: 'small muted', text: 'Both modes challenge the recommendation and track sources. Focused prioritizes the meeting decision. Deep allows more independent checks and may exceed seven minutes. Review the assessment and unknowns before presenting.' })),
     !isPrime ? null : el('section', { class: 'card' },
       seg('type', 'Kind', [['ministry', 'Church or ministry'], ['business', 'Business'], ['auto', 'Not sure']]),
       seg('model', 'Model', [['auto', 'Decide from research'], ['faith', 'Faith'], ['secular', 'Secular']], showBible),
@@ -789,51 +811,43 @@ function deckAssembly() {
 }
 
 // Live progress, from the engine's own log lines.
-const STEPS = [['Reading their website', 'Pages, photos, logo and colors'], ['Researching', 'Census numbers, growth, news and reviews'], ['Writing', 'The deck, assessment and cheat sheet'], ['Building the deck', 'Slides, animations and the talk track'], ['Printing the documents', 'Assessment, cheat sheet and leave-behind']];
+const STEPS = [['Reading their website', 'Pages, photos, logo and colors'], ['Researching', 'Sources, market context, news and reviews'], ['Writing', 'The deck, assessment and cheat sheet'], ['Building the deck', 'Slides, animations and the talk track'], ['Printing the documents', 'Assessment, cheat sheet and leave-behind']];
 const STEP_LINES = [[0, /\] (Reading|Starting)/], [1, /\] Researching /], [2, /\] Writing the brief/], [3, /\] Building the deck/], [4, /\] Printing /], [5, /\] Done\./]];
 const CHANGE = [['Applying your changes', 'Notes, links, photo and colors'], ['Building the deck', 'Slides, animations and the talk track'], ['Printing the documents', 'Assessment, cheat sheet and leave-behind']];
 const CHANGE_LINES = [[0, /\] Changing/], [1, /\] Building the deck/], [2, /\] Printing /], [3, /\] Done\./]];
 pages.run = async () => {
+  const owns = routeOwner();
   const wrap = el('div', { class: 'wrap narrow' }); view.append(wrap);
   const st = await S.status();
-  if (!st.running) { wrap.append(el('div', { class: 'empty' }, el('div', { class: 'pm-host' }, primeMorph(150, { hold: 2000, rest: 1300 })), el('h2', { text: 'Nothing is building right now.' }), el('div', { class: 'actions' }, el('a', { class: 'btn primary', href: '#new' }, 'New prospect'), el('a', { class: 'btn ghost', href: '#library' }, 'Library')))); return; }
+  if (!owns()) return;
+  if (st.running) wrap.append(el('div', { class: 'note' }, S.web ? 'Keep this tab open. The kit keeps building while you ' : 'The kit keeps building if you leave this page. ', el('a', { href: '#home' }, S.web ? 'play a quick game' : 'Play a quick game'), ' or review your Clients while you wait.'));
+  if (!st.running) { wrap.append(el('div', { class: 'empty' }, el('div', { class: 'pm-host' }, keyGlyph()), el('h2', { text: 'Nothing is building right now.' }), el('div', { class: 'actions' }, el('a', { class: 'btn primary', href: '#new' }, 'New prospect'), el('a', { class: 'btn ghost', href: '#library' }, 'Library')))); return; }
   pageName(st.name, true);
   const lines = st.lines.slice(), STEPS_NOW = st.kind === 'change' ? CHANGE : STEPS, LINES_NOW = st.kind === 'change' ? CHANGE_LINES : STEP_LINES;
-  let reached = 0;
-  const time = el('div', { class: 'clock' }), log = el('pre', { class: 'log' }), steps = el('ol', { class: 'steps' });
-  // The build as a bridge: one pylon per step, the deck fills as steps land and the P rides across to their door.
-  const N = STEPS_NOW.length, at = (k) => 4 + 92 * (k / N);
-  const svgNS = 'http://www.w3.org/2000/svg', arcs = document.createElementNS(svgNS, 'svg');
-  arcs.setAttribute('class', 'arcs'); arcs.setAttribute('viewBox', '0 0 800 150'); arcs.setAttribute('preserveAspectRatio', 'none'); arcs.setAttribute('aria-hidden', 'true');
-  // Three arcs rise over the deck like the rainbow arcs on the deck covers, drawn in as the page opens.
-  [['#E1251B', 0.35, -70], ['#1D4ED8', 0.4, -46], ['#F7C400', 0.55, -22]].forEach(([c, o, h], j) => {
-    const p = document.createElementNS(svgNS, 'path'); p.setAttribute('d', 'M 0 93 Q 400 ' + h + ' 800 93'); p.setAttribute('stroke', c); p.setAttribute('opacity', o); p.setAttribute('vector-effect', 'non-scaling-stroke');
-    p.style.setProperty('--len', '1100'); p.style.animationDelay = j * 0.25 + 's'; arcs.append(p);
-  });
-  const fill = el('div', { class: 'fill' }), pylons = STEPS_NOW.map((_, k) => el('div', { class: 'pylon', style: 'left:' + at(k) + '%' }, String(k + 1)));
-  const rider = el('div', { class: 'rider', style: 'left:' + at(0) + '%' }, primeMorph(46, { hold: 1500, rest: 900 })), home = el('div', { class: 'home', title: 'Their door' }, '🏠');
-  const labels = el('div', { class: 'labels' }, STEPS_NOW.map(([t], k) => el('span', { style: 'left:' + (at(k) - 4) / 0.92 + '%', text: t })));
-  const bridge = el('div', { class: 'bridge', role: 'img', 'aria-label': 'Build progress' }, plate('halftone', st.name || 'build', inks()[2], { w: 1200, h: 220, step: 14, opacity: 0.32 }), arcs, el('div', { class: 'deck' }, fill), ...pylons, rider, home, labels);
+  let reached = 0, stopped = false;
+  const time = el('div', { class: 'clock' }), log = el('pre', { class: 'log' }), steps = el('ol', { class: 'steps build-stages' });
+  const N = STEPS_NOW.length, mark = el('div', { class: 'build-map-mark', 'aria-hidden': 'true' });
+  mark.innerHTML = window.PrioMarks.progress(N, 0);
+  const segments = [...mark.querySelectorAll('[data-stage]')], buildCaption = el('p', { class: 'small muted' });
+  const buildMap = el('div', { class: 'build-map', 'data-purpose': 'build-stage-status' }, el('div', {}, mark, buildCaption), steps);
   const nowline = el('div', { class: 'nowline', 'aria-live': 'polite' });
   const asm = deckAssembly(); let asmAt = -1;
   const paint = () => {
     LINES_NOW.forEach(([k, re]) => { if (lines.some((l) => re.test(l))) reached = Math.max(reached, k); });
-    const failed = lines.some((l) => /\] ERROR/.test(l)), done = reached >= N;
+    const done = reached >= N, failed = !done && (stopped || lines.some((l) => /\] ERROR/.test(l)));
     steps.replaceChildren(...STEPS_NOW.map(([t, s], k) => el('li', { class: k < reached ? 'done' : k === reached ? (failed ? 'fail' : 'now') : null },
-      el('span', { class: 'dot', text: k < reached ? '✓' : failed && k === reached ? '!' : String(k + 1) }), el('div', {}, t, el('small', { text: s })))));
-    pylons.forEach((p, k) => { p.className = 'pylon' + (k < reached ? ' done' : k === reached ? (failed ? ' fail' : ' now') : ''); p.textContent = k < reached ? '✓' : failed && k === reached ? '!' : String(k + 1); });
-    labels.querySelectorAll('span').forEach((x, k) => x.classList.toggle('on', k <= reached));
-    fill.style.width = (done ? 100 : (at(reached) - 4) / 0.92) + '%';
-    rider.style.left = done ? 'calc(100% - 27px)' : at(reached) + '%'; home.classList.toggle('done', done);
+      el('span', { class: 'dot', text: k < reached ? '✓' : failed && k === reached ? '!' : String(k + 1) }), el('div', {}, t, el('small', { text: s }), el('span', { class: 'phase-status small', text: k < reached ? 'Done' : k === reached ? failed ? 'Stopped' : 'In progress' : 'Waiting' })))));
+    segments.forEach((part, k) => { part.dataset.state = k < reached ? 'done' : k === reached ? failed ? 'fail' : 'now' : 'waiting'; });
+    buildCaption.textContent = Math.min(reached, N) + ' of ' + N + ' stages complete';
     const cur = STEPS_NOW[Math.min(reached, N - 1)];
     if (done) asm.done(); else if (reached !== asmAt) { asmAt = reached; asm.step(st.kind === 'change' ? reached + 2 : reached, cur[0]); }
     nowline.replaceChildren(failed ? 'Stopped while ' + cur[0].toLowerCase() : done ? 'Done. Opening the kit…' : cur[0] + '…', el('small', { text: failed ? 'The log below says why.' : done ? '' : cur[1] }));
     log.textContent = lines.join('\n'); log.scrollTop = log.scrollHeight;
   };
-  wrap.append(el('div', { class: 'head' }, el('div', {}, el('div', { class: 'eyebrow', text: st.kind === 'new' ? 'Building the kit · usually about 7 minutes' : 'Changing the kit · usually under a minute' }), el('h1', { text: st.name }))),
+  wrap.append(el('div', { class: 'head' }, el('div', {}, el('p', { class: 'muted', text: st.kind === 'new' ? 'Building your kit' : 'Changing your kit' }), el('h1', { text: st.name }))),
     asm.el,
-    el('section', { class: 'card' }, el('div', { style: 'display:flex;justify-content:space-between;align-items:flex-end;gap:16px' }, el('div', {}, el('div', { class: 'eyebrow', text: 'Running for' }), time), nowline), bridge,
-      el('details', {}, el('summary', { class: 'muted small' }, 'Every step'), steps), el('details', {}, el('summary', { class: 'muted small' }, 'The full log'), log)));
+    el('section', { class: 'card' }, el('div', { class: 'build-heading' }, el('div', {}, el('span', { class: 'small muted', text: 'Elapsed time' }), time), nowline), buildMap,
+      el('details', {}, el('summary', { class: 'muted small' }, 'The full log'), log)));
   const tick = setInterval(() => { time.textContent = clock(Date.now() - st.t0); }, 1000); time.textContent = clock(Date.now() - st.t0);
   paint();
   // What Claude is doing, live: every search and page read lands as a chip; the counters keep score.
@@ -858,7 +872,7 @@ pages.run = async () => {
   lines.forEach(take);
   const offLog = S.onLog(({ line }) => { lines.push(line); take(line); paint(); });
   const offDone = S.onDone((r) => {
-    clearInterval(tick); paint();
+    clearInterval(tick); stopped = !r.ok; paint();
     if (r.ok) { reached = N; paint(); store.set('celebrate', r.dir); setTimeout(() => { location.hash = 'kit/' + encodeURIComponent(r.dir); }, moving() ? 1100 : 0); }
     else { log.parentElement.open = true; wrap.append(el('div', { class: 'note err', text: 'The kit stopped: ' + r.error }), el('div', { class: 'actions' }, el('a', { class: 'btn ghost', href: '#new' }, 'Back to the form'))); }
   });
@@ -883,7 +897,9 @@ function setupBanner() {
   return box;
 }
 pages.library = async () => {
-  const all = await S.kits(); const cat = catalogue(all);
+  const owns = routeOwner();
+  const all = await S.kits(); if (!owns()) return;
+  const cat = catalogue(all);
   const q = el('input', { type: 'text', placeholder: 'Search by name or city', 'aria-label': 'Search the library' });
   const grid = el('div', { class: 'grid' });
   const doImport = async (kind) => {
@@ -938,7 +954,9 @@ pages.library = async () => {
 const label = (n) => /-web-deck\.html$/i.test(n) ? 'Animated deck: click to present' : /-deck\.pdf$/i.test(n) ? 'The deck as a PDF (to email or print)' : /-deck-video\.(mp4|webm)$/i.test(n) ? 'Deck video' : /\.pptx$/i.test(n) ? 'Growth deck (PowerPoint)' : /assessment/i.test(n) ? 'Prospect assessment (internal)' : /cheat/i.test(n) ? 'Cheat sheet for the presenter' : /leave/i.test(n) ? 'Leave-behind for the client' : /calculator|\.xlsx$/i.test(n) ? 'Impact calculator' : /\.mp4$/i.test(n) ? 'Video clip' : n;
 const rank = (n) => /-web-deck\.html$/i.test(n) ? -2 : /-deck\.pdf$/i.test(n) ? -1.5 : /-deck-video\./i.test(n) ? -1 : /\.pptx$/i.test(n) ? 0 : /leave/i.test(n) ? 1 : /cheat/i.test(n) ? 2 : /assessment/i.test(n) ? 3 : 5;
 pages.kit = async (dir) => {
+  const owns = routeOwner();
   const k = await S.kit(dir);
+  if (!owns()) return;
   const wrap = el('div', { class: 'wrap' }); view.append(wrap);
   if (!k) { wrap.append(el('div', { class: 'note err', text: 'This kit folder is gone or empty.' }), el('a', { class: 'btn ghost', href: '#library' }, 'Back to the Library')); return; }
   pageName(k.name);
@@ -950,6 +968,7 @@ pages.kit = async (dir) => {
     else { crmBtn.textContent = 'Add to Clients'; crmBtn.onclick = async () => { if (crmBtn.disabled) return; crmBtn.disabled = true; try { const n = await window.crmAddKit(k); toast(k.name + ' added to Clients.'); location.hash = 'crm/' + n.id; } catch (e) { crmBtn.disabled = false; toast(errText(e)); } }; }
   }).catch(() => crmBtn.remove());
   const all = await S.kits(), group = all.find((g) => g.versions.some((v) => v.dir === k.dir));
+  if (!owns()) return;
   const files = k.files.slice().sort((a, b) => rank(a.name) - rank(b.name)), deck = files.find((f) => /\.pptx$/i.test(f.name)), web = files.find((f) => /-web-deck\.html$/i.test(f.name));
   // The kit opens in the prospect's own colors: their dark color as the ground, their accent as the glow, their logo up front.
   const cs = (k.colors || []).map((c) => '#' + String(c).replace('#', ''));
@@ -963,7 +982,9 @@ pages.kit = async (dir) => {
           el('div', { class: 'chips' }, modelChip(k), k.fit ? el('span', { class: 'chip fit', text: 'Fit ' + k.fit }) : null, swatch(k.colors), k.note ? el('span', { class: 'muted small', text: k.note }) : null))),
       el('div', { class: 'actions' }, crmBtn, el('button', { class: 'btn ghost', type: 'button', onclick: () => S.reveal(deck ? deck.path : k.dir) }, 'Show in folder'), rehearseBtn,
         deck ? el('button', { class: 'btn ghost', type: 'button', title: 'Open the PowerPoint deck', onclick: () => S.open(deck.path) }, 'PowerPoint') : null,
-        web && k.canChange ? el('button', { class: 'btn ghost', type: 'button', title: 'Edit words right on the slides, the talk track, slide order, colors, photos, art and typeface, with a live preview', onclick: () => openStudio(k) }, 'Edit the deck') : null,
+        web && k.canChange ? el('button', { class: 'btn ghost', type: 'button', title: 'Edit the animated deck', onclick: () => k.engine === 'universal' ? window.presentationOptions(k) : openStudio(k) }, 'Edit the deck') : null,
+        web && k.canChange && k.engine !== 'universal' ? el('button', { class: 'btn ghost', type: 'button', onclick: () => window.presentationOptions(k) }, 'Motion and audio') : null,
+        web ? el('button', { class: 'btn ghost', type: 'button', onclick: () => window.sharePresentation(k) }, 'Share presentation') : null,
         web ? videoBtn(k) : null,
         web ? keyed(el('button', { class: 'btn primary', type: 'button', title: 'Present the animated deck. With a second screen, your talk track and clock stay on this one.', onclick: () => presentDeck(web.path) }, 'Present'))
           : k.pending ? el('button', { class: 'btn primary', type: 'button', disabled: true }, 'Building the decks…') : k.canChange ? makeDeckBtn(k) : null)),
@@ -1027,6 +1048,7 @@ pages.kit = async (dir) => {
     const keep = idx; idx = -1; show(keep);
   };
   await drawViewer();
+  if (!owns()) return;
   const offPrev = S.onPreviews(async (what, d) => {
     if (d.dir !== k.dir) return;
     if (what === 'done') { if (d.ok) { toast('Slide previews ready.'); drawViewer(await S.kit(k.dir)); } else { toast(d.reason || 'Could not make previews.'); drawViewer(); } }
@@ -1038,15 +1060,17 @@ pages.kit = async (dir) => {
   // Files, then the summary beside the other versions.
   wrap.append(el('section', { class: 'card' }, el('div', { class: 'kithead' }, el('h2', { text: 'The kit' }),
       el('div', { class: 'actions' },
-        web ? el('button', { class: 'btn ghost sm', type: 'button', title: 'Save the animated deck somewhere to email or share it (one file, works offline)', onclick: async () => { try { const r = await S.saveCopy(web.path); if (r.saved) toast('Saved: ' + r.file.split(/[\\/]/).pop()); } catch (e) { toast(errText(e)); } } }, 'Save the deck to share…') : null,
+        web ? el('button', { class: 'btn ghost sm', type: 'button', onclick: () => window.sharePresentation(k) }, 'Share presentation') : null,
         web ? exportBtn('PDF', 'Every slide finished, one per page: to email or print', async (b) => { const off = S.onExport((d) => { if (d.dir === k.dir) b.textContent = 'Making the PDF… ' + d.pct + '%'; }); try { const r = await S.deckPdf(k.dir); toast('PDF ready: ' + r.pages + ' pages, ' + r.mb + ' MB.'); S.reveal(r.file); route(); } finally { off(); } }) : null,
-        web && k.canChange ? exportBtn('PowerPoint copy', 'A PowerPoint copy for anyone who asks (no motion: PowerPoint cannot keep it)', async (b) => { b.textContent = 'Making the PowerPoint copy…'; const r = await S.deckPptx(k.dir); toast('PowerPoint copy ready (' + r.slides + ' slides). It has no motion; present from the app.'); route(); }) : null,
+        web && k.canChange && k.engine !== 'universal' ? exportBtn('PowerPoint copy', 'A static copy; app motion and audio are not included', async (b) => { b.textContent = 'Making the PowerPoint copy…'; const r = await S.deckPptx(k.dir); toast('PowerPoint copy ready (' + r.slides + ' slides). It has no motion; present from the app.'); route(); }) : null,
         el('button', { class: 'btn ghost sm', type: 'button', title: 'Every file in this kit as one zip, for your team (it includes the internal assessment)', onclick: async (ev) => { const b = ev.currentTarget; b.disabled = true; b.textContent = 'Exporting…'; try { const r = await S.exportKit(k.dir); if (r.saved) toast('Kit exported. It includes the internal assessment: for your team only.'); } catch (e) { toast(errText(e)); } finally { b.disabled = false; b.textContent = 'Export for your team…'; } } }, 'Export for your team…'),
         el('button', { class: 'btn ghost sm danger', type: 'button', onclick: async () => { try { const r = await S.trashKit(k.dir); if (r.deleted) { toast('Moved to the Recycle Bin.'); refreshCount(); location.hash = 'library'; } } catch (e) { toast(errText(e)); } } }, 'Delete this version…'))),
     el('div', { class: 'files' }, files.map((f) => el('button', { class: 'file', type: 'button', title: /-web-deck\.html$/i.test(f.name) ? 'Present ' + f.name : 'Open ' + f.name, onclick: () => (/-web-deck\.html$/i.test(f.name) ? presentDeck(f.path) : S.open(f.path)) },
       el('span', { class: 'ext ' + f.name.split('.').pop().toLowerCase(), text: f.name.split('.').pop().toUpperCase() }), el('div', {}, el('b', { text: label(f.name) }), el('span', { class: 'muted', text: mb(f.size) })))))));
-  if (k.canChange || k.ads.length) wrap.append(adsCard(k));
-  if (k.canChange) wrap.append(followCard(k));
+  const videos = files.filter((file) => /\.(mp4|webm)$/i.test(file.name));
+  if (videos.length) wrap.append(el('div', { class: 'actions' }, videos.map((file) => el('button', { type: 'button', class: 'btn ghost sm', onclick: () => window.publishingOptions({ kind: 'video', id: file.name, title: k.name }) }, 'Posting options: ' + file.name))));
+  if (k.engine !== 'universal' && (k.canChange || k.ads.length)) wrap.append(adsCard(k));
+  if (k.engine !== 'universal' && k.canChange) wrap.append(followCard(k));
   const others = group ? group.versions.filter((v) => v.dir !== k.dir) : [];
   wrap.append(el('div', { class: 'two' },
     el('div', { style: 'min-width:0' }, k.summary ? el('section', { class: 'card' }, md(k.summary.replace(/^- \*\*Files:\*\*.*$/m, ''), 'checks.' + k.dir)) : null),
@@ -1087,7 +1111,9 @@ function changeCard(k) {
 }
 
 pages.settings = async () => {
+  const owns = routeOwner();
   const set = await S.settings();
+  if (!owns()) return;
   const key = el('input', { id: 's-key', type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: set.hasKey ? 'Saved. Paste a new key to replace it.' : 'sk-ant-…' });
   const status = el('div');
   const save = keyed(el('button', { class: 'btn dark', type: 'button' }, 'Save and check')), lock = lockGlyph(set.hasKey);
@@ -1176,7 +1202,18 @@ pages.settings = async () => {
     if (!window.guideMode) return null;
     const G = [['on', 'On'], ['quiet', 'Quiet'], ['off', 'Hidden']];
     const btns = G.map(([v, t]) => el('button', { type: 'button', 'aria-pressed': String(window.guideMode() === v), onclick: () => { window.guideMode(v); btns.forEach((b, i) => b.setAttribute('aria-pressed', String(G[i][0] === v))); } }, t));
-    return el('div', { class: 'field guidepick' }, el('span', { class: 'label', text: 'Your guide' }, el('span', { class: 'hint', text: 'The P in the corner points out the next step when you pause, and can do anything here by voice: hover over it and click the mic. Quiet: it only talks when you click it. On Windows, turn on Voice Access and say "Open PRIO" to start the app by voice.' })), el('div', { class: 'seg', role: 'group', 'aria-label': 'Your guide' }, btns), el('button', { class: 'btn ghost', type: 'button', style: 'margin-top:10px', onclick: () => window.guideTour && window.guideTour() }, 'Replay the tour'));
+    const rotate = el('input', { type: 'checkbox' }); rotate.checked = window.guideRotate();
+    rotate.onchange = () => { window.guideRotate(rotate.checked); marks.querySelectorAll('button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.mark === window.guideMark()))); };
+    const marks = el('div', { class: 'guide-marks', role: 'group', 'aria-label': 'Guide mark' }, window.PrioMarks.styles.map((style) => {
+      const art = el('span', { class: 'guide-mark-preview' }); art.innerHTML = window.PrioMarks.svg(style.id);
+      return el('button', { type: 'button', 'data-mark': style.id, 'aria-pressed': String(window.guideMark() === style.id), onclick: (event) => {
+        window.guideMark(style.id); rotate.checked = false; event.currentTarget.parentNode.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === event.currentTarget)));
+      } }, art, el('span', { text: style.name }));
+    }));
+    return el('div', { class: 'field guidepick' }, el('span', { class: 'label', text: 'Your guide' }, el('span', { class: 'hint', text: 'The P in the corner can research, explain the app and help with your work. Quiet: it only talks when you click it. Ctrl+J opens the conversation.' })), el('div', { class: 'seg', role: 'group', 'aria-label': 'Your guide' }, btns),
+      el('label', { class: 'check' }, rotate, 'New guide appearance at each app opening'),
+      el('details', { class: 'guide-mark-choices' }, el('summary', {}, 'Choose the P mark'), el('p', { class: 'muted small', text: 'The same guide, with catalog-inspired variations in your current colors. Choose one to keep it. The main PRIO brand does not change.' }), marks),
+      el('button', { class: 'btn ghost', type: 'button', style: 'margin-top:10px', onclick: () => window.guideTour && window.guideTour() }, 'Replay the tour'));
   }
   const MOTIONS = [['full', 'Full'], ['calm', 'Calm'], ['off', 'Off']];
   const motionBtns = MOTIONS.map(([v, t]) => el('button', { type: 'button', 'aria-pressed': String(motionLevel() === v), onclick: () => { store.set('motion', v); applyLook(); motionBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(MOTIONS[i][0] === v))); if (v === 'full') burst(); } }, t));
@@ -1184,6 +1221,11 @@ pages.settings = async () => {
     el('section', { class: 'card' }, el('h2', { text: 'Appearance' }),
       el('div', { class: 'field' }, el('span', { class: 'label', text: 'Mode' }), el('div', { class: 'themes three' }, themeBtns)), roll, yourLogo(), el('details', { class: 'morelooks' }, el('summary', {}, 'More looks', el('span', { class: 'hint', text: 'Ready-made color schemes and your own' })), themeLibrary(), customEditor()), lookOptions(), guidePicker(),
       el('div', { class: 'field' }, el('span', { class: 'label', text: 'Motion' }, el('span', { class: 'hint', text: 'Full: covers morph into decks, cards glide in, a burst when a kit is ready. Calm: quicker and quieter. Off: nothing moves.' })), el('div', { class: 'seg', role: 'group', 'aria-label': 'Motion' }, motionBtns)),
+      el('div', { class: 'field' }, el('label', { for: 'intro-style' }, 'Opening style'),
+        el('select', { id: 'intro-style', onchange: (event) => store.set('intro.style', event.target.value) },
+          [['light-path', 'Light path'], ['fold', 'Fold'], ['assemble', 'Assemble'], ['shuffle', 'Shuffle']].map(([value, name]) =>
+            el('option', { value, selected: store.get('intro.style', 'light-path') === value }, name))),
+        el('p', { class: 'hint', text: 'Applies at the next opening, using your current colors. Full motion only. Click or press a key to skip.' })),
       el('p', { class: 'muted small', style: 'margin:4px 0 0' }, 'Press ', el('kbd', { text: '?' }), ' anywhere for keyboard shortcuts.')),
     el('section', { class: 'card' }, el('h2', { class: 'withlock' }, lock, 'Research key'),
       el('ol', { class: 'howto' },
@@ -1406,6 +1448,7 @@ function adsCard(k) {
       el('video', { src: a.src, muted: true, loop: true, playsinline: true, autoplay: moving(), controls: !moving(), preload: 'metadata', title: a.formatName + ': ' + a.use, onmouseenter: (e) => { e.currentTarget.controls = true; }, onmouseleave: (e) => { if (moving()) e.currentTarget.controls = false; } }),
       el('figcaption', {}, el('b', { text: a.formatName }), el('span', { class: 'muted small', text: mb(a.size) }),
         el('span', { class: 'grow' }),
+        el('button', { class: 'btn ghost sm', type: 'button', onclick: () => window.publishingOptions({ kind: 'ad', id: a.path.split(/[\\/]/).pop(), title: k.name + ': ' + g.name }) }, 'Posting options'),
         el('button', { class: 'btn ghost sm', type: 'button', title: 'Save a copy to send or post', onclick: async () => { try { const r = await S.saveCopy(a.path); if (r.saved) toast('Saved: ' + r.file.split(/[\\/]/).pop()); } catch (e) { toast(errText(e)); } } }, 'Save…')))))));
   const priceNote = el('p', { class: 'ad-price small' });
   const card = el('section', { class: 'card ads' },
@@ -1608,11 +1651,11 @@ async function welcome(force) {
   const done = (h) => () => { store.set('welcomed', true); w.remove(); if (h) location.hash = h; };
   const w = el('div', { class: 'welcome', role: 'dialog', 'aria-label': 'Welcome to PRIO' }, plate('void', 'welcome', ['#F7C400', '#FFFFFF', '#2F63FF'], { fit: 'xMidYMid slice', x: 0.9, hz: 0.84, size: 0.07 }, 'pl-welcome pl-void'), plate('overprint', 'welcome', PRIME_INKS.slice(0, 3), { blend: 'screen', opacity: 0.7, n: 6, band: [0.72, 1] }, 'pl-welcome'), el('div', { class: 'in' }, svg,
     primeMorph(84, { delay: 1200, cls: 'pm-welcome' }), el('div', { class: 'eyebrow wl-eyebrow', text: 'PRIO, by Prio Connect' }), el('h1', { text: 'Walk into every meeting ready.' }),
-    el('p', { class: 'lead', text: prime.length ? 'Ready to go. Your Library already holds the Prio Connect kits: ' + prime.join(', ').replace(/, ([^,]*)$/, ' and $1') + '. Their decks are being built on this computer now, about a minute each, at no cost.' : 'Name a prospect. PRIO researches their town and their story, and you get the deck, the talk track, the cheat sheet and the leave-behind in about seven minutes.' }),
+    el('p', { class: 'lead', text: prime.length ? 'Your Library already holds the Prio Connect kits: ' + prime.join(', ').replace(/, ([^,]*)$/, ' and $1') + '. Their saved research is being turned into decks on this computer without new research calls.' : 'Name a prospect. PRIO researches the business and builds the deck, speaking notes, cheat sheet and leave-behind. Research time varies; deep research can take longer.' }),
     el('div', { class: 'steps3' },
       el('div', {}, el('em', { text: 'Now' }), el('b', { text: 'Present any kit' }), el('span', { text: 'Open a kit and press Present. With a second screen, your talk track and clock stay with you. R rehearses.' })),
       el('div', {}, el('em', { text: 'Any time' }), el('b', { text: 'Bring in your other decks' }), el('span', { text: 'Drop a kit zip, a kit folder or a deck and its PDFs onto this window.' })),
-      el('div', {}, el('em', { text: 'New prospects' }), el('b', { text: set.hasKey ? 'Your research key is set' : 'Add your research key once' }), el('span', { text: set.hasKey ? 'Name a prospect and the research, deck and kit are built here.' : 'Only needed to research someone new (about $2 a kit). It stays encrypted on this computer.' }))),
+      el('div', {}, el('em', { text: 'New prospects' }), el('b', { text: set.hasKey ? 'Your research key is set' : 'Add your research key once' }), el('span', { text: set.hasKey ? 'Name a prospect and the research, deck and kit are built here.' : 'AI research needs your own Anthropic key. Usage is billed by Anthropic; cost varies by request. Settings shows how the key is stored.' }))),
     el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', onclick: done('library') }, 'Open my Library'),
       el('button', { class: 'btn ghost', type: 'button', onclick: done(set.hasKey ? 'new' : 'settings') }, set.hasKey ? 'Build a new kit' : 'Add my research key'),
       el('button', { class: 'btn ghost', type: 'button', onclick: async () => { const r = await S.importKits('files'); if (!r.canceled) { done('library')(); route(); refreshCount(); } } }, 'Import kits…'))));
@@ -1667,6 +1710,7 @@ S.settings().then((s) => { $('#foot').textContent = 'v' + s.version; });
 $('#dice').addEventListener('click', (e) => rollColors(e.currentTarget)); applyLook();
 { const b = $('.rail .brand'), img = b && b.querySelector('img'); if (img) img.replaceWith(primeMorph(30, { hover: true, hoverHost: b, hold: 700 })); }
 { const nav = $('.rail nav'); if (nav) nav.after(keyed(el('button', { class: 'keybtn', type: 'button', title: 'Every action, kit and setting in one place (Ctrl K)', onclick: () => palette() }, el('span', { text: 'Find anything' }), el('kbd', { text: 'Ctrl K' })))); }
+window.startPrio = () => {
 addEventListener('hashchange', route);
 watchRunning(); refreshCount();
 // On launch the I of PRIO shoots out of the P's counter and lands far back on the ground; it skips forward spelling
@@ -1675,9 +1719,15 @@ const splashed = new Promise((done) => {
   const sp = $('#splash'); if (!sp) return done();
   const level = motionLevel(); if (level === 'off') { sp.remove(); return done(); }
   if (level === 'calm') sp.classList.add('skip');
-  const gone = () => { sp.remove(); removeEventListener('keydown', skip, true); removeEventListener('pointerdown', skip, true); };
-  const skip = () => { if (!sp.isConnected) return; sp.classList.add('skip'); done(); setTimeout(gone, 260); };
+  const gone = () => { sp.dispatchEvent(new Event('prio:intro-cancel')); sp.remove(); removeEventListener('keydown', skip, true); removeEventListener('pointerdown', skip, true); sp.removeEventListener('prio:intro-skip', skip); };
+  const skip = (event) => {
+    if (!sp.isConnected || sp.classList.contains('skip')) return;
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+    sp.dispatchEvent(new Event('prio:intro-cancel')); sp.classList.add('skip'); done(); setTimeout(gone, 260);
+  };
+  sp.addEventListener('prio:intro-skip', skip);
   addEventListener('keydown', skip, true); addEventListener('pointerdown', skip, true);
   const ms = window.PRIO_INTRO_MS || 6000; setTimeout(done, level === 'calm' ? 0 : ms - 900); setTimeout(gone, level === 'calm' ? 260 : ms + 700);
 });
 splashed.then(route).then(() => welcome()).then(() => { if (store.get('look.moved', '')) { store.del('look.moved'); setTimeout(() => toast('New look: Notebook. Your earlier one is still in Settings, under Appearance.'), 900); } });
+};

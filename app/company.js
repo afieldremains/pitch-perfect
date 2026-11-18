@@ -20,7 +20,9 @@
     el('span', { class: 'co-logo co-initial', style: 'width:' + size + 'px;height:' + size + 'px;background:' + c.colors.brand + ';color:#fff', text: (c.short || c.name || '?').trim().charAt(0).toUpperCase() });
 
   async function list() {
-    let db; try { db = await S.companies(); } catch (e) { view.append(el('div', { class: 'wrap' }, el('div', { class: 'note err', text: errText(e) }))); return; }
+    const owns = routeOwner();
+    let db; try { db = await S.companies(); } catch (e) { if (owns()) view.append(el('div', { class: 'wrap' }, el('div', { class: 'note err', text: errText(e) }))); return; }
+    if (!owns()) return;
     const wrap = el('div', { class: 'wrap co' }); view.append(wrap);
     const use = async (c, b) => { b.disabled = true; try { await S.companyActivate(c.id); toast('Now making decks, ads and brand kits for ' + c.name + '.'); chip(); route(); } catch (e) { b.disabled = false; toast(errText(e)); } };
     wrap.append(el('div', { class: 'head' }, el('div', {}, el('div', { class: 'eyebrow', text: 'Who is pitching' }), el('h1', { text: 'My company' }),
@@ -35,7 +37,9 @@
   }
 
   async function editor(id) {
+    const owns = routeOwner();
     const [db, o] = await Promise.all([S.companies(), options()]);
+    if (!owns()) return;
     const fresh = id === 'new';
     const c = fresh ? { name: '', industry: '', offer: '', audience: '', city: '', website: '', email: '', phone: '', voice: '', tagline: '', colors: { brand: '#2656D9', accent: '#FAC800', dark: '#121218' }, packages: [], proof: [], logo: '' } : JSON.parse(JSON.stringify(db.companies.find((x) => x.id === id) || {}));
     const wrap = el('div', { class: 'wrap narrow co-edit' }); view.append(wrap);

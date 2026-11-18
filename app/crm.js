@@ -53,7 +53,9 @@
     view.append(el('div', { class: 'wrap crm' }, el('div', { class: 'note err', text: errText(e) }), el('button', { class: 'btn primary', type: 'button', onclick: () => route() }, 'Try again')));
   }
   async function home() {
-    let all, kits; try { [all, kits] = await Promise.all([S.crmList(), S.kits().catch(() => [])]); } catch (e) { failed(e); return; }
+    const owns = routeOwner();
+    let all, kits; try { [all, kits] = await Promise.all([S.crmList(), S.kits().catch(() => [])]); } catch (e) { if (owns()) failed(e); return; }
+    if (!owns()) return;
     S.crmNotice().then((n) => { if (n) toast(n); }).catch(() => {});
     const linked = new Set(all.flatMap((p) => p.kits)), names = new Set(all.map((p) => p.name.trim().toLowerCase()));
     const loose = kits.filter((g) => !g.versions.some((v) => linked.has(v.dir)) && !names.has(String(g.name).trim().toLowerCase()));
@@ -81,6 +83,7 @@
         due ? el('p', { class: 'crm-due-line' }, el('b', { text: due + ' follow-up' + (due === 1 ? '' : 's') }), ' due today or late.') : null),
         el('div', { class: 'actions' },
           loose.length ? el('button', { class: 'btn ghost', type: 'button', onclick: fromLibrary, title: loose.map((g) => g.name).join(', ') }, 'Add ' + loose.length + ' from the Library') : null,
+          el('a', { class: 'btn ghost', href: '#crm/targets' }, 'Find targets'),
           all.length ? el('button', { class: 'btn ghost', type: 'button', onclick: exp }, 'Export to a spreadsheet') : null,
           el('button', { class: 'btn primary', type: 'button', onclick: add }, 'Add a prospect'))),
       el('div', { class: 'crm-bar' }, seg, search), body);
@@ -172,7 +175,9 @@
 
   // ---------- one prospect ----------
   async function page(pid, fresh) {
-    let all, kits; try { [all, kits] = await Promise.all([S.crmList(), S.kits().catch(() => [])]); } catch (e) { failed(e); return; }
+    const owns = routeOwner();
+    let all, kits; try { [all, kits] = await Promise.all([S.crmList(), S.kits().catch(() => [])]); } catch (e) { if (owns()) failed(e); return; }
+    if (!owns()) return;
     let p = all.find((x) => x.id === pid);
     const wrap = el('div', { class: 'wrap crm crm-page' }); view.append(wrap);
     if (!p) { wrap.append(el('div', { class: 'note err', text: 'That prospect is not in your Clients any more.' }), el('a', { class: 'btn ghost', href: '#crm' }, 'Back to Clients')); return; }
@@ -285,5 +290,5 @@
     draw();
   }
 
-  pages.crm = async (rest) => { const [pid, flag] = String(rest || '').split('/'); return pid ? page(pid, flag === 'new') : home(); };
+  pages.crm = async (rest) => { const [pid, flag] = String(rest || '').split('/'); if (pid === 'targets' && pages.targets) return pages.targets(); return pid ? page(pid, flag === 'new') : home(); };
 })();

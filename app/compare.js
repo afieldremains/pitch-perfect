@@ -6,6 +6,9 @@
 'use strict';
 (() => {
   const errText = (e) => String(e && e.message || e).replace(/^Error invoking remote method '[^']+': (Error: )?/, '');
+  const printStyle = document.createElement('style');
+  printStyle.textContent = '@media print{html.cmp-printing,html.cmp-printing body{height:auto;display:block}html.cmp-printing main{overflow:visible;height:auto}html.cmp-printing .cmp-deck{display:block}html.cmp-printing .cmp-slide{overflow:visible;break-inside:avoid}}';
+  document.head.append(printStyle);
   const PRIORITIES = ['Price', 'Running costs', 'Reliability', 'Safety', 'Size and space', 'Features', 'Warranty', 'Reviews', 'Speed or performance', 'Availability'];
   const clock = (ms) => { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
@@ -23,7 +26,7 @@
       })); });
     return el('table', { class: 'cmp-table' }, el('thead', {}, head), el('tbody', {}, ...body));
   }
-  function slideNode(c, s) {
+  function slideContent(c, s) {
     if (s.kind === 'cover') return el('div', { class: 'cmp-slide cover' }, el('p', { class: 'cmp-no', text: c.no ? 'PRIO ' + c.no : 'Comparison' }), el('h2', { text: c.title }),
       el('div', { class: 'cmp-items' }, c.items.map((it, i) => el('div', {}, el('b', { text: String(i + 1) }), el('span', { text: it.name })))), c.ask && c.ask.priorities.length ? el('p', { class: 'cmp-sub', text: 'What matters most: ' + c.ask.priorities.join(', ') }) : null);
     if (s.kind === 'group') return el('div', { class: 'cmp-slide' }, el('h3', { text: s.g.name }), table(c, s.g.rows));
@@ -33,13 +36,21 @@
     return el('div', { class: 'cmp-slide' }, el('h3', { text: 'Sources' }), c.sources && c.sources.length ? el('ol', { class: 'cmp-sources' }, c.sources.map((x) => el('li', {}, el('span', { text: x.title }), el('small', { text: x.url })))) : el('p', { class: 'muted', text: 'Sources appear when the research is done.' }),
       el('p', { class: 'muted small', text: 'Prices and figures as published on ' + new Date(c.at || Date.now()).toLocaleDateString() + '. Check with the seller before buying.' }));
   }
+  function slideNode(c, s) {
+    const slide = slideContent(c, s);
+    const template = document.createElement('template');
+    const provenance = window.PPE ? window.PPE.Provenance : window.PrioProvenance;
+    template.innerHTML = provenance.html({ position: 'comparison' });
+    slide.append(template.content.firstElementChild);
+    return slide;
+  }
   function present(c) {
     const list = slides(c); let i = 0;
     const stage = el('div', { class: 'cmp-stage' }), count = el('span', { class: 'cmp-count' });
     const box = el('div', { class: 'cmp-show', role: 'dialog', 'aria-label': 'Presenting ' + c.title, tabindex: '-1' }, stage,
       el('div', { class: 'cmp-nav' }, el('button', { class: 'btn ghost', type: 'button', onclick: () => go(-1) }, 'Back'), count, el('button', { class: 'btn primary', type: 'button', onclick: () => go(1) }, 'Next'), el('button', { class: 'btn ghost', type: 'button', onclick: () => close() }, 'Close')));
     const go = (d) => { i = Math.max(0, Math.min(list.length - 1, i + d)); stage.replaceChildren(slideNode(c, list[i])); count.textContent = (i + 1) + ' of ' + list.length; };
-    const key = (e) => { if (e.key === 'Escape') close(); else if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(1); } else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1); } };
+    const key = (e) => { if (e.key === 'Escape') close(); else if (e.target.closest('a,button,input,textarea')) return; else if (['ArrowRight', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); go(1); } else if (['ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(-1); } };
     const close = () => { removeEventListener('keydown', key, true); box.remove(); };
     addEventListener('keydown', key, true); document.body.append(box); go(0); box.focus();
     if (box.requestFullscreen) box.requestFullscreen().catch(() => {});

@@ -15,12 +15,12 @@ It also makes complete ad campaigns and brand kits, and it keeps your clients, f
 
 | Your computer | Download |
 |---|---|
-| Windows 10 or 11 | **[PRIO-Setup.exe](https://github.com/afieldremains/pitch-perfect/raw/main/PRIO-Setup.exe)** (about 100 MB) |
-| Mac (Apple silicon or Intel) | **[Releases](https://github.com/afieldremains/pitch-perfect/releases/latest)**: choose the `arm64` file for Apple silicon (M1 and newer) or `x64` for Intel |
+| Windows 10 or 11 (64-bit) | [PRIO-Setup-0.39.0.exe](https://github.com/afieldremains/pitch-perfect/releases/download/v0.39.0/PRIO-Setup-0.39.0.exe) (98 MB) |
+| Browser, including Mac and phones | [Open PRIO](https://afieldremains.github.io/pitch-perfect/app/) |
 
-The current version is 0.38.0.
+The current version is 0.39.0. These links open without a GitHub account. Email the links instead of attaching the installer; most email services block executable attachments or files this large.
 
-The older Windows links (`PRIME-Pitch-Perfect-Setup.exe` and `Vereza-Setup.exe`) still work and download this same installer.
+The older Windows files in this repository are earlier versions. Use the versioned download above. This release does not include Mac installers.
 
 **iPhone, iPad, Android, Chromebook or any browser:** open **[the web app](https://afieldremains.github.io/pitch-perfect/app/)**.
 - On iPhone or iPad, tap Share, then **Add to Home Screen**.
@@ -28,27 +28,31 @@ The older Windows links (`PRIME-Pitch-Perfect-Setup.exe` and `Vereza-Setup.exe`)
 
 Your work stays on that device. The web app makes the same any-company decks, ads and brand kits. Prio Connect's own deck design, PowerPoint copies and video exports are in the desktop app.
 
-Not sure which Mac you have? Open the Apple menu and choose **About This Mac**. If it says "Chip: Apple M…", download Apple silicon. If it says "Processor: Intel", download Intel.
-
 ## Install
 
-**Windows:** Open the file. Windows may say "Windows protected your PC", because the app isn't code-signed yet. Click **More info**, then **Run anyway**. Installing over an earlier version keeps all your work.
+**Windows:** Open the downloaded file. The installer is not code-signed, so Windows may say "Windows protected your PC." If you trust this download, choose **More info**, then **Run anyway**. A managed work computer may require approval from its administrator.
 
-**Mac:** Open the disk image and drag the app to Applications. The first time you open it, right-click the app, choose **Open**, then choose **Open** again. The app isn't signed by Apple yet. If the Mac says the app "is damaged", open Terminal and run `xattr -cr /Applications/PRIO.app`, then open it again.
+## Create your local account
+
+On the first screen, choose **Create a local account**, enter your email, choose a username and a password of at least 12 characters, then add your business details. After creating the account, sign in with that email or username and password on the same device.
+
+An email containing these links is not an account invitation. There is no email verification, email password recovery or account sync. Windows and each browser keep separate accounts and workspaces, even if you use the same email. Keep your password in a password manager and protect the device with its operating-system account. This login does not encrypt your files.
 
 ## Before your first kit
 
-Research needs an Anthropic API key, the kind that starts with `sk-ant-api03-`. Create one at console.anthropic.com, then paste it into the app under **Settings → Research key**. The key is stored encrypted on your computer and is only used to run your research.
+AI research needs your own Anthropic API key and incurs API usage charges. Create a key at [console.anthropic.com](https://console.anthropic.com), then add it under **Settings → Research key**. Do not send your key in an email or share it with recipients.
+
+The desktop app encrypts the saved key when operating-system encryption is available. The web app stores the key in that browser's local storage, without that encryption.
 
 ## Where your work lives
 
-New installs save everything in `Documents/PRIO`. If you used an earlier version, the app keeps using its folder (`Documents/PRIME Pitch Perfect` or `Documents/Vereza`), so nothing moves. Nothing is uploaded anywhere else.
+Desktop work stays on your computer; browser work stays in that browser's storage. Signing in on another device does not transfer it. Research requests and prompts are sent to Anthropic when you use AI features.
 
-The first time PRIO opens, it rebuilds every kit that has its research so the kit says Prio Connect. The original research is kept beside each kit as `research.prime.json`.
+When an existing installation offers to use unassigned work in a new local account, leave that option unchecked to start separately. Existing work is not assigned to a new account without that choice.
 
 ## Questions
 
 Jake Satterfield: jake@prioconnect.com, (941) 473-6690
 Greg Satterfield: greg@prioconnect.com, (317) 888-9900
 
-Windows installer SHA-256: `fd7d36c0b3ff1b30215ba6dea31536f7f3d574c55a9143b857519422b50293cb`
+Windows installer SHA-256: `c6935cd09130ae0903c040a7cd46f7fb6713a157ced59b1c48d0776bdfd32013`
