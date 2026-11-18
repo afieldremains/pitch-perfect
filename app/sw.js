@@ -1,6 +1,6 @@
 // Keeps the app's own files on the device so it opens offline; research and the AI need a connection.
-const CACHE = 'prio-0.37.0';
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', 'index.html', 'app.css', 'web.css', 'app.js', 'engine.js', 'studio-web.js', 'pages-web.js', 'crm.js', 'buddy.js', 'company.js', 'make.js', 'plates.js', 'logo-schemes.js', 'themes.js', 'viewer.html', 'viewer.js', 'manifest.json'])).then(() => self.skipWaiting())); });
+const CACHE = 'prio-0.38.0';
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', 'index.html', 'app.css', 'web.css', 'app.js', 'intro.js', 'engine.js', 'studio-web.js', 'pages-web.js', 'crm.js', 'buddy.js', 'company.js', 'make.js', 'compare.js', 'plates.js', 'logo-schemes.js', 'themes.js', 'viewer.html', 'viewer.js', 'manifest.json'])).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);

@@ -174,7 +174,7 @@ function applyUi() {
   r.style.setProperty('--display', font(u.head)); r.style.setProperty('--body', font(u.body));
   const c = O.corners.find((x) => x[0] === u.corners) || O.corners[1]; r.style.setProperty('--r', c[2] + 'px'); r.style.setProperty('--r-sm', c[3] + 'px');
   r.dataset.paper = u.paper; r.dataset.cover = u.cover; r.dataset.turn = u.turn; r.style.setProperty('--cover-c', u.coverColor);
-  r.style.zoom = String((O.size.find((x) => x[0] === u.size) || O.size[1])[2]);
+  r.style.zoom = String((O.size.find((x) => x[0] === u.size) || O.size[1])[2]); r.dataset.size = u.size || 'normal';
 }
 function applyLook() {
   const r = document.documentElement, theme = themeNow();
@@ -485,7 +485,29 @@ function plate(kind, seed, cols, o = {}, extra = '') {
 // No slide previews yet: their logo on a white chip over an overprint plate in their own colors (Martens).
 const hexOf = (c) => '#' + String(c || '').replace('#', '');
 const logoCover = (v, seed) => { const cs = (v.colors || []).map(hexOf); return el('span', { class: 'logocover', style: cs[0] ? '--k:' + cs[0] : '' }, plate('overprint', seed, cs.length ? cs.concat(['#F7C400']) : PRIME_INKS, { w: 400, h: 225, n: 6, blend: 'screen', opacity: 0.7, animate: false }), el('span', { class: 'lc-chip' }, el('img', { src: v.logoSrc, alt: '', loading: 'lazy' }))); };
-const cardBack = (ini, seed) => el('span', { class: 'cardback' }, plate('cutpaper', seed || ini || 'P', PRIME_INKS, { w: 400, h: 300, n: 4, animate: false }), el('b', { text: ini || 'P' }));
+// The catalogue: every kit gets a number in the order it was first made (PRIO 001 is the oldest), the way a record
+// label numbers its releases. The number never changes when a kit gets a new version, and it is how you can ask for one.
+const catalogue = (groups) => {
+  const first = (g) => Math.min(...g.versions.map((v) => +new Date(v.stamp || 0) || 0));
+  const m = new Map(); groups.slice().sort((a, b) => first(a) - first(b) || a.name.localeCompare(b.name)).forEach((g, i) => m.set(g.name, 'PRIO ' + String(i + 1).padStart(3, '0'))); return m;
+};
+// A sleeve for each kit: black lines on white, two fields of stripes at slightly different angles so they interfere.
+// Seeded by the kit's name, so every kit's sleeve is its own and never changes.
+function opArt(seed, o = {}) {
+  let h = 2166136261; for (const c of String(seed)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  const rnd = () => { h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909); return ((h >>>= 0) % 10000) / 10000; };
+  const W = 400, H = 300, gap = 7 + Math.round(rnd() * 5), a1 = Math.round(rnd() * 180), a2 = a1 + 3 + Math.round(rnd() * 6), cx = 80 + rnd() * 240, cy = 60 + rnd() * 180;
+  const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('preserveAspectRatio', 'xMidYMid slice'); svg.setAttribute('aria-hidden', 'true'); svg.classList.add('opart');
+  const field = (ang, clip) => { const g = document.createElementNS(ns, 'g'); g.setAttribute('transform', `rotate(${ang} ${cx} ${cy})`); if (clip) g.setAttribute('clip-path', 'url(#' + clip + ')');
+    for (let y = -400; y < 700; y += gap) { const r = document.createElementNS(ns, 'rect'); r.setAttribute('x', -400); r.setAttribute('y', y); r.setAttribute('width', 1200); r.setAttribute('height', gap / 2); g.append(r); } return g; };
+  const id = 'oa' + Math.round(rnd() * 1e9), defs = document.createElementNS(ns, 'defs'), cp = document.createElementNS(ns, 'clipPath'), circ = document.createElementNS(ns, 'circle');
+  cp.id = id; circ.setAttribute('cx', cx); circ.setAttribute('cy', cy); circ.setAttribute('r', 70 + rnd() * 90); cp.append(circ); defs.append(cp);
+  const bg = document.createElementNS(ns, 'rect'); bg.setAttribute('width', W); bg.setAttribute('height', H); bg.setAttribute('fill', o.paper || '#FFFFFF');
+  const ink = document.createElementNS(ns, 'g'); ink.setAttribute('fill', o.ink || '#111114'); ink.append(field(a1), document.createElementNS(ns, 'g'));
+  const disc = document.createElementNS(ns, 'g'); disc.setAttribute('fill', o.ink || '#111114'); const bgc = bg.cloneNode(); bgc.setAttribute('clip-path', 'url(#' + id + ')'); disc.append(bgc, field(a2, id));
+  svg.append(defs, bg, ink, disc); return svg;
+}
+const cardBack = (ini, seed) => el('span', { class: 'cardback sleeve' }, opArt(seed || ini || 'P'), el('b', { text: ini || 'P' }));
 function deal(grid) {
   if (motionLevel() !== 'full') return;
   grid.classList.add('dealing');
@@ -721,6 +743,51 @@ pages.new = async () => {
   if (!d.name) setTimeout(() => inputs.name && inputs.name.focus(), 0);
 };
 
+// The deck, assembled where you can see it: everything the build finds (their logo, their colors, each search and
+// source) flies onto a slide as it happens; the headline writes itself, the slide becomes a stack, and the documents
+// print out beside it. Driven only by the engine's real log lines, so what you see is what is being done.
+function deckAssembly() {
+  const slot = (cls, kids) => el('div', { class: cls }, ...(kids || []));
+  const logo = slot('asm-logo'), band = slot('asm-band'), head = slot('asm-head', [el('i'), el('i')]), body = slot('asm-body'), pics = slot('asm-pics');
+  const slide = slot('asm-slide', [band, logo, head, body, pics]);
+  const stack = slot('asm-stack', [el('i'), el('i'), el('i'), el('i')]);
+  const docs = slot('asm-docs', ['Assessment', 'Cheat sheet', 'Leave-behind'].map((t) => el('div', { class: 'asm-doc', text: t })));
+  const caption = el('p', { class: 'asm-cap', 'aria-live': 'polite' });
+  const stage = slot('asm-stage', [stack, slide, docs]);
+  const box = el('section', { class: 'card asm', 'aria-label': 'The deck being assembled' }, stage, caption);
+  const go = () => moving() && stage.isConnected;
+  let flights = 0;
+  const fly = (node, target, then) => {
+    if (!go() || flights > 6) { then && then(); return; }
+    flights++; const s = stage.getBoundingClientRect(), t = target.getBoundingClientRect();
+    node.classList.add('asm-fly'); stage.append(node);
+    const x1 = t.left - s.left + t.width / 2, y1 = t.top - s.top + t.height / 2, x0 = -40, y0 = 30 + Math.random() * (s.height - 60);
+    node.style.left = x1 + 'px'; node.style.top = y1 + 'px';
+    const a = node.animate([{ transform: `translate(calc(-50% + ${x0 - x1}px), calc(-50% + ${y0 - y1}px)) scale(1)`, opacity: 0 }, { opacity: 1, offset: 0.15 },
+      { transform: 'translate(-50%, -50%) scale(.5)', opacity: 0.9, offset: 0.85 }, { transform: 'translate(-50%, -50%) scale(.3)', opacity: 0 }], { duration: 1100, easing: 'cubic-bezier(.3,.6,.2,1)' });
+    a.onfinish = () => { node.remove(); flights--; then && then(); };
+  };
+  const line = () => { if (body.children.length < 9) { const b = el('i', { style: '--w:' + (45 + Math.round(Math.random() * 50)) + '%' }); body.append(b); } };
+  const say = (t) => { caption.textContent = t; };
+  return {
+    el: box,
+    search(text) { fly(el('span', { class: 'asm-chip', text: text.slice(0, 44) }), body, line); say('Searching: ' + text); },
+    read(host) { fly(el('span', { class: 'asm-chip src', text: host }), body, line); say('Reading ' + host); },
+    site(pages, photos) { say('Read ' + pages + ' pages of their website'); for (let i = 0; i < Math.min(photos, 3); i++) setTimeout(() => fly(el('span', { class: 'asm-chip pic', text: 'Photo' }), pics, () => pics.append(el('i'))), i * 350); },
+    logo(v) {
+      const img = /^https?:\/\//.test(v) ? el('img', { src: v, alt: '' }) : el('b', { text: v.slice(0, 24) });
+      if (img.tagName === 'IMG') img.onerror = () => img.replaceWith(el('b', { text: 'Logo' }));
+      fly(el('span', { class: 'asm-chip', text: 'Logo' }), logo, () => { logo.replaceChildren(img); logo.classList.add('on'); }); say('Found their logo');
+    },
+    colors(list) {
+      list.slice(0, 3).forEach((c, i) => setTimeout(() => fly(el('span', { class: 'asm-sw', style: 'background:' + c }), band, () => { if (i === 0) band.style.background = c; else band.style.setProperty('--c' + i, c); band.classList.add('on'); }), i * 300));
+      say('Their colors');
+    },
+    step(k, label) { box.dataset.step = String(k); if (label) say(label); },
+    done() { box.dataset.step = 'done'; say('Done. Opening the kit.'); }
+  };
+}
+
 // Live progress, from the engine's own log lines.
 const STEPS = [['Reading their website', 'Pages, photos, logo and colors'], ['Researching', 'Census numbers, growth, news and reviews'], ['Writing', 'The deck, assessment and cheat sheet'], ['Building the deck', 'Slides, animations and the talk track'], ['Printing the documents', 'Assessment, cheat sheet and leave-behind']];
 const STEP_LINES = [[0, /\] (Reading|Starting)/], [1, /\] Researching /], [2, /\] Writing the brief/], [3, /\] Building the deck/], [4, /\] Printing /], [5, /\] Done\./]];
@@ -748,6 +815,7 @@ pages.run = async () => {
   const labels = el('div', { class: 'labels' }, STEPS_NOW.map(([t], k) => el('span', { style: 'left:' + (at(k) - 4) / 0.92 + '%', text: t })));
   const bridge = el('div', { class: 'bridge', role: 'img', 'aria-label': 'Build progress' }, plate('halftone', st.name || 'build', inks()[2], { w: 1200, h: 220, step: 14, opacity: 0.32 }), arcs, el('div', { class: 'deck' }, fill), ...pylons, rider, home, labels);
   const nowline = el('div', { class: 'nowline', 'aria-live': 'polite' });
+  const asm = deckAssembly(); let asmAt = -1;
   const paint = () => {
     LINES_NOW.forEach(([k, re]) => { if (lines.some((l) => re.test(l))) reached = Math.max(reached, k); });
     const failed = lines.some((l) => /\] ERROR/.test(l)), done = reached >= N;
@@ -758,10 +826,12 @@ pages.run = async () => {
     fill.style.width = (done ? 100 : (at(reached) - 4) / 0.92) + '%';
     rider.style.left = done ? 'calc(100% - 27px)' : at(reached) + '%'; home.classList.toggle('done', done);
     const cur = STEPS_NOW[Math.min(reached, N - 1)];
+    if (done) asm.done(); else if (reached !== asmAt) { asmAt = reached; asm.step(st.kind === 'change' ? reached + 2 : reached, cur[0]); }
     nowline.replaceChildren(failed ? 'Stopped while ' + cur[0].toLowerCase() : done ? 'Done. Opening the kit…' : cur[0] + '…', el('small', { text: failed ? 'The log below says why.' : done ? '' : cur[1] }));
     log.textContent = lines.join('\n'); log.scrollTop = log.scrollHeight;
   };
   wrap.append(el('div', { class: 'head' }, el('div', {}, el('div', { class: 'eyebrow', text: st.kind === 'new' ? 'Building the kit · usually about 7 minutes' : 'Changing the kit · usually under a minute' }), el('h1', { text: st.name }))),
+    asm.el,
     el('section', { class: 'card' }, el('div', { style: 'display:flex;justify-content:space-between;align-items:flex-end;gap:16px' }, el('div', {}, el('div', { class: 'eyebrow', text: 'Running for' }), time), nowline), bridge,
       el('details', {}, el('summary', { class: 'muted small' }, 'Every step'), steps), el('details', {}, el('summary', { class: 'muted small' }, 'The full log'), log)));
   const tick = setInterval(() => { time.textContent = clock(Date.now() - st.t0); }, 1000); time.textContent = clock(Date.now() - st.t0);
@@ -778,11 +848,11 @@ pages.run = async () => {
   const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, '') + new URL(u).pathname.replace(/\/$/, '').slice(0, 40); } catch (x) { return u; } };
   const take = (line) => {
     let m;
-    if ((m = line.match(/Read (\d+) pages of their website; found (\d+) photos/))) { bump('site', +m[1]); bump('photos', +m[2]); chip('w', 'W', 'Read ' + m[1] + ' pages of their website'); }
-    else if ((m = line.match(/searching: (.+)$/))) { bump('searches'); chip('s', '?', m[1]); }
-    else if ((m = line.match(/reading (https?:\/\/\S+)/))) { bump('reads'); chip('r', '↗', host(m[1])); }
-    else if ((m = line.match(/\]\s+Logo: (.+?)( \(|$)/))) chip('k', '★', 'Logo: ' + m[1]);
-    else if ((m = line.match(/Colors: (.+)\.$/))) chip('k', '◐', 'Their colors', el('span', { style: 'display:inline-flex;gap:3px' }, (m[1].match(/#[0-9A-F]{6}/gi) || []).map((c) => el('span', { class: 'sw', style: 'background:' + c }))));
+    if ((m = line.match(/Read (\d+) pages of their website; found (\d+) photos/))) { bump('site', +m[1]); bump('photos', +m[2]); chip('w', 'W', 'Read ' + m[1] + ' pages of their website'); asm.site(+m[1], +m[2]); }
+    else if ((m = line.match(/searching: (.+)$/))) { bump('searches'); chip('s', '?', m[1]); asm.search(m[1]); }
+    else if ((m = line.match(/reading (https?:\/\/\S+)/))) { bump('reads'); chip('r', '↗', host(m[1])); asm.read(host(m[1]).split('/')[0]); }
+    else if ((m = line.match(/\]\s+Logo: (.+?)( \(|$)/))) { chip('k', '★', 'Logo: ' + m[1]); asm.logo(m[1]); }
+    else if ((m = line.match(/Colors: (.+)\.$/))) { chip('k', '◐', 'Their colors', el('span', { style: 'display:inline-flex;gap:3px' }, (m[1].match(/#[0-9A-F]{6}/gi) || []).map((c) => el('span', { class: 'sw', style: 'background:' + c })))); asm.colors(m[1].match(/#[0-9A-F]{6}/gi) || []); }
     else if ((m = line.match(/Research done: (\d+) searches, (\d+) pages read/))) { bump('searches', +m[1]); bump('reads', +m[2]); chip('k', '✓', 'Research done'); }
   };
   lines.forEach(take);
@@ -813,7 +883,7 @@ function setupBanner() {
   return box;
 }
 pages.library = async () => {
-  const all = await S.kits();
+  const all = await S.kits(); const cat = catalogue(all);
   const q = el('input', { type: 'text', placeholder: 'Search by name or city', 'aria-label': 'Search the library' });
   const grid = el('div', { class: 'grid' });
   const doImport = async (kind) => {
@@ -837,7 +907,7 @@ pages.library = async () => {
       .sort((a, b) => (sort === 'name' ? a.name.localeCompare(b.name) : sort === 'fit' ? fitOf(b) - fitOf(a) : 0));
     grid.replaceChildren(...shown.map((g, i) => { const v = g.latest, nv = g.versions.length; return withTilt(el('a', { class: 'kitcard' + (nv > 1 ? ' stack' : '') + (nv > 2 ? ' stack2' : ''), style: '--i:' + Math.min(i, 12), href: '#kit/' + encodeURIComponent(v.dir), onclick: (e) => { const c = e.currentTarget.querySelector('.cover img'); if (c && v.cover) { c.style.viewTransitionName = 'deck'; morph = true; } } },
       el('div', { class: 'cover' }, v.cover ? el('img', { src: v.cover, alt: '', loading: 'lazy' }) : v.logoSrc ? logoCover(v, g.name) : cardBack(initials(g.name), g.name), nv > 1 ? el('span', { class: 'tag', text: nv + ' versions' }) : null),
-      el('div', { class: 'meta' }, el('span', { class: 'name', text: g.name }), el('span', { class: 'sub', text: [v.city, when(v.stamp)].filter(Boolean).join(' · ') }),
+      el('div', { class: 'meta' }, el('span', { class: 'catno', text: cat.get(g.name) }), el('span', { class: 'name', text: g.name }), el('span', { class: 'sub', text: [v.city, when(v.stamp)].filter(Boolean).join(' · ') }),
         el('div', { class: 'chips' }, modelChip(v), v.fit ? el('span', { class: 'chip fit', text: 'Fit ' + v.fit }) : null, v.ads && v.ads.length ? el('span', { class: 'chip', title: 'Mock ads made for this kit', text: '▷ ' + v.ads.length + ' ad' + (v.ads.length === 1 ? '' : 's') }) : null, swatch(v.colors))))); }));
     if (echo && moving()) { const o = echo; [...grid.children].forEach((c) => { const b = c.getBoundingClientRect(), dist = Math.hypot(b.left + b.width / 2 - o.x, b.top + b.height / 2 - o.y); c.style.setProperty('--echo', Math.min(900, Math.round(dist * 0.8)) + 'ms'); c.classList.add('echo'); if (c.classList.contains('kitcard')) c.append(el('i', { class: 'echo-ring', 'aria-hidden': 'true' })); }); }
     echo = false;
@@ -857,7 +927,7 @@ pages.library = async () => {
   const wrap = el('div', { class: 'wrap grid12' }, setupBanner(),
     el('div', { class: 'head mb' }, el('span', { class: 'mb-num', 'aria-hidden': 'true', text: String(all.length).padStart(2, '0') }), el('div', { class: 'mb-title' }, primeMorph(58, { delay: 2400 }), el('div', {}, el('div', { class: 'eyebrow', text: all.length + ' kit' + (all.length === 1 ? '' : 's') + ' on this computer' }), el('h1', { text: 'Library' }))),
       el('div', { class: 'actions' }, el('button', { class: 'btn ghost', type: 'button', onclick: () => doImport('folder') }, 'Import a folder…'), el('button', { class: 'btn dark', type: 'button', onclick: () => doImport('files') }, 'Import kits…'))));
-  if (!all.length) wrap.append(el('div', { class: 'empty' }, el('div', { class: 'pm-host' }, primeMorph(150, { hold: 2000, rest: 1300 })), el('h2', { text: 'Your kits will live here.' }),
+  if (!all.length) wrap.append(el('div', { class: 'empty' }, el('div', { class: 'sleeve-empty' }, opArt('PRIO 001'), el('span', { text: 'PRIO 001' })), el('h2', { text: 'Your kits will live here.' }),
     el('p', { text: 'Add the Prio Connect kits that come with the app, build a new one, or drop any kit zip, kit folder or deck onto this window.' }),
     el('div', { class: 'actions' }, el('button', { class: 'btn primary', type: 'button', onclick: addPrimeKits }, 'Add the Prio Connect kits'), el('a', { class: 'btn dark', href: '#new' }, 'New prospect'), el('button', { class: 'btn ghost', type: 'button', onclick: () => doImport('files') }, 'Import kits…'))));
   else { wrap.append(libraryStats(all)); wrap.append(el('div', { class: 'toolbar' }, q, el('div', { class: 'seg', role: 'group', 'aria-label': 'Show' }, segBtns), el('span', { class: 'grow' }), sortSel), grid); paint(); }
@@ -1044,6 +1114,13 @@ pages.settings = async () => {
     recent.length ? el('div', { class: 'recent' }, el('span', { class: 'hint', text: 'Recent rolls' }), recent.map((r2) => el('button', { type: 'button', class: 'past', title: r2.name, onclick: (e) => { const cur = store.get('seed'); store.set('seed', r2.seed); store.set('recentSeeds', [cur, ...store.get('recentSeeds', []).filter((x) => x !== r2.seed && x !== cur)].slice(0, 6)); setScheme(e.currentTarget); } },
       [r2.vars.rail, r2.vars.ground, r2.vars.accent].map((c) => el('i', { style: 'background:' + c })), el('span', { text: r2.name })))) : null) : null;
   // Every palette from the Prio Connect logo catalog, shown as its logo: one click makes it the app's colors (in Shuffle).
+  // Your logo, not ours: make one in Brand kits or add your own in My company; decks take their colors from it.
+  // (Prio Connect's own logo palettes stay behind the scenes as deck color schemes and in Shuffle.)
+  function yourLogo() {
+    return el('div', { class: 'field' }, el('span', { class: 'label', text: 'Your logo' }, el('span', { class: 'hint', text: 'Decks, ads and brand kits take their colors from the logo of the company in use.' })),
+      el('div', { class: 'actions', style: 'justify-content:flex-start' }, el('a', { class: 'btn primary', href: '#brand' }, 'Make a logo'), el('a', { class: 'btn ghost', href: '#company' }, 'Add my logo')));
+  }
+  void logoPicker;
   function logoPicker() {
     if (typeof LOGO_SCHEMES === 'undefined') return null;
     const cur = themeNow() === 'shuffle' && sc.logo ? sc.logo.id : '';
@@ -1105,7 +1182,7 @@ pages.settings = async () => {
   const motionBtns = MOTIONS.map(([v, t]) => el('button', { type: 'button', 'aria-pressed': String(motionLevel() === v), onclick: () => { store.set('motion', v); applyLook(); motionBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(MOTIONS[i][0] === v))); if (v === 'full') burst(); } }, t));
   view.append(el('div', { class: 'wrap narrow' }, el('div', { class: 'head plated' }, (soft() ? null : plate('mech', 'settings', [inks()[0], inks()[1], inks()[2], 'var(--ink)'], { w: 900, h: 300, fit: 'xMaxYMid slice', rings: 5, size: 1.7, x: 0.8 })), el('div', {}, el('div', { class: 'eyebrow', text: 'This computer' }), el('h1', { text: 'Settings' }))),
     el('section', { class: 'card' }, el('h2', { text: 'Appearance' }),
-      el('div', { class: 'field' }, el('span', { class: 'label', text: 'Mode' }), el('div', { class: 'themes three' }, themeBtns)), roll, logoPicker(), themeLibrary(), customEditor(), lookOptions(), guidePicker(),
+      el('div', { class: 'field' }, el('span', { class: 'label', text: 'Mode' }), el('div', { class: 'themes three' }, themeBtns)), roll, yourLogo(), el('details', { class: 'morelooks' }, el('summary', {}, 'More looks', el('span', { class: 'hint', text: 'Ready-made color schemes and your own' })), themeLibrary(), customEditor()), lookOptions(), guidePicker(),
       el('div', { class: 'field' }, el('span', { class: 'label', text: 'Motion' }, el('span', { class: 'hint', text: 'Full: covers morph into decks, cards glide in, a burst when a kit is ready. Calm: quicker and quieter. Off: nothing moves.' })), el('div', { class: 'seg', role: 'group', 'aria-label': 'Motion' }, motionBtns)),
       el('p', { class: 'muted small', style: 'margin:4px 0 0' }, 'Press ', el('kbd', { text: '?' }), ' anywhere for keyboard shortcuts.')),
     el('section', { class: 'card' }, el('h2', { class: 'withlock' }, lock, 'Research key'),
@@ -1530,8 +1607,8 @@ async function welcome(force) {
   const img = document.createElementNS(svgNS, 'image'); img.setAttribute('href', 'icons/prime-mark.png'); img.setAttribute('x', 349); img.setAttribute('y', 116); img.setAttribute('width', 22); img.setAttribute('height', 28); img.style.cssText = 'animation:pop .7s cubic-bezier(.2,1.35,.35,1) both 1.75s;transform-origin:360px 130px'; svg.append(img);
   const done = (h) => () => { store.set('welcomed', true); w.remove(); if (h) location.hash = h; };
   const w = el('div', { class: 'welcome', role: 'dialog', 'aria-label': 'Welcome to PRIO' }, plate('void', 'welcome', ['#F7C400', '#FFFFFF', '#2F63FF'], { fit: 'xMidYMid slice', x: 0.9, hz: 0.84, size: 0.07 }, 'pl-welcome pl-void'), plate('overprint', 'welcome', PRIME_INKS.slice(0, 3), { blend: 'screen', opacity: 0.7, n: 6, band: [0.72, 1] }, 'pl-welcome'), el('div', { class: 'in' }, svg,
-    primeMorph(84, { delay: 1200, cls: 'pm-welcome' }), el('div', { class: 'eyebrow', style: 'color:#F7C400', text: 'PRIO, by Prio Connect' }), el('h1', { text: 'Walk into every meeting ready.' }),
-    el('p', { class: 'lead', text: prime.length ? 'Ready to go. Your Library already holds the Prio Connect kits: ' + prime.join(', ').replace(/, ([^,]*)$/, ' and $1') + '. Their decks are being built on this computer now, about a minute each, at no cost.' : 'Name a prospect. Pitch Perfect researches their town and their story, and you get the deck, the talk track, the cheat sheet and the leave-behind in about seven minutes.' }),
+    primeMorph(84, { delay: 1200, cls: 'pm-welcome' }), el('div', { class: 'eyebrow wl-eyebrow', text: 'PRIO, by Prio Connect' }), el('h1', { text: 'Walk into every meeting ready.' }),
+    el('p', { class: 'lead', text: prime.length ? 'Ready to go. Your Library already holds the Prio Connect kits: ' + prime.join(', ').replace(/, ([^,]*)$/, ' and $1') + '. Their decks are being built on this computer now, about a minute each, at no cost.' : 'Name a prospect. PRIO researches their town and their story, and you get the deck, the talk track, the cheat sheet and the leave-behind in about seven minutes.' }),
     el('div', { class: 'steps3' },
       el('div', {}, el('em', { text: 'Now' }), el('b', { text: 'Present any kit' }), el('span', { text: 'Open a kit and press Present. With a second screen, your talk track and clock stay with you. R rehearses.' })),
       el('div', {}, el('em', { text: 'Any time' }), el('b', { text: 'Bring in your other decks' }), el('span', { text: 'Drop a kit zip, a kit folder or a deck and its PDFs onto this window.' })),
@@ -1592,8 +1669,8 @@ $('#dice').addEventListener('click', (e) => rollColors(e.currentTarget)); applyL
 { const nav = $('.rail nav'); if (nav) nav.after(keyed(el('button', { class: 'keybtn', type: 'button', title: 'Every action, kit and setting in one place (Ctrl K)', onclick: () => palette() }, el('span', { text: 'Find anything' }), el('kbd', { text: 'Ctrl K' })))); }
 addEventListener('hashchange', route);
 watchRunning(); refreshCount();
-// On launch the I of PRIO launches out of the P's counter and falls behind it; when it lands the O runs left leaving
-// "Ohhhhh!", and the app rolls in as a wave from where it landed (Full motion; Calm skips it, Off shows nothing). The Library is drawn under the wave.
+// On launch the I of PRIO shoots out of the P's counter and lands far back on the ground; it skips forward spelling
+// CONNECT, and the word stands up and fills the screen (intro.js) (Full motion; Calm skips it, Off shows nothing). The Library is drawn under the wave.
 const splashed = new Promise((done) => {
   const sp = $('#splash'); if (!sp) return done();
   const level = motionLevel(); if (level === 'off') { sp.remove(); return done(); }
@@ -1601,6 +1678,6 @@ const splashed = new Promise((done) => {
   const gone = () => { sp.remove(); removeEventListener('keydown', skip, true); removeEventListener('pointerdown', skip, true); };
   const skip = () => { if (!sp.isConnected) return; sp.classList.add('skip'); done(); setTimeout(gone, 260); };
   addEventListener('keydown', skip, true); addEventListener('pointerdown', skip, true);
-  setTimeout(done, level === 'calm' ? 0 : 3700); setTimeout(gone, level === 'calm' ? 260 : 4650);
+  const ms = window.PRIO_INTRO_MS || 6000; setTimeout(done, level === 'calm' ? 0 : ms - 900); setTimeout(gone, level === 'calm' ? 260 : ms + 700);
 });
 splashed.then(route).then(() => welcome()).then(() => { if (store.get('look.moved', '')) { store.del('look.moved'); setTimeout(() => toast('New look: Notebook. Your earlier one is still in Settings, under Appearance.'), 900); } });

@@ -1558,7 +1558,7 @@ dialog.keys::backdrop, dialog.palette::backdrop, .adprev::backdrop { backdrop-fi
   --field: #FFFFFF; --chip: #F0F0ED; --fit-bg: #EEF2FC; --fit-ink: #1C3F9E; --link: #2656D9; --hover: #F2F2EF;
   --accent: #2656D9; --accent-ink: #FFFFFF; --accent-glow: rgba(38,86,217,.22);
   --blue: #2656D9; --red: #C8231C; --yellow: #FAC800; --yellow-ink: #3A2E00; --green: #1F7A4D; --amber: #9A5B00;
-  --note: #FFF6D1; --note-ink: #4D3A00; --note-err: #FCEBEA; --note-err-ink: #7A1712; --note-ok: #E8F3EC; --note-ok-ink: #1C4D33;
+  --note: #EEF2FC; --note-ink: #1C3F9E; --note-err: #FCEBEA; --note-err-ink: #7A1712; --note-ok: #E8F3EC; --note-ok-ink: #1C4D33;
   --shadow: 0 1px 0 rgba(17,17,20,.04), 0 1px 3px rgba(17,17,20,.06);
   --shadow-lift: 0 1px 0 rgba(17,17,20,.05), 0 12px 28px -14px rgba(17,17,20,.28);
   color-scheme: light;
@@ -1597,46 +1597,45 @@ dialog.keys::backdrop, dialog.palette::backdrop, .adprev::backdrop { backdrop-fi
 :root[data-theme="studio"] .bd-shadow, :root[data-theme="studio"] .bd-cheek { display: none; }
 :root[data-theme="studio"] .buddy .bd-bubble, :root[data-theme="studio"] .bd-tip { box-shadow: 0 1px 0 rgba(17,17,20,.04), 0 6px 18px -10px rgba(17,17,20,.25); border: 1px solid var(--line); }
 
-/* ---------- the opening: quiet on purpose. A small P on paper; its I slips out of the counter, arcs away and falls back
-   faintly behind it; where it lands the app rises in as a white swell with a hairline edge. ---------- */
-#splash.rk { --ph: min(13vh, 112px); --land: 9vw; background: #F5F5F3; display: grid; place-items: center; animation: rk-out .45s ease-out 4.15s both; }
+/* ---------- the opening: a small P on paper over a receding line grid (Superstudio's supersurface; Trevor Jackson's
+   op-art sleeves for Soulwax). Its I, yellow with a red dot, shoots out of the counter and lands far back on the ground;
+   intro.js then skips it forward, spelling CONNECT, and the word stands up and fills the screen. ---------- */
+#splash.rk { --ph: min(13vh, 112px); background: #F5F5F3; display: grid; place-items: center; animation: rk-out .6s ease-out 6.2s both; }
 #splash.rk.skip { animation: rk-out .2s ease-in both; }
 #splash.rk.skip * { animation: none !important; opacity: 0; }
-.rk-stage { position: relative; height: var(--ph); aspect-ratio: 304 / 383; }
+.rk-floor { position: absolute; left: -50%; right: -50%; top: 60%; height: 120%; transform-origin: 50% 0; transform: perspective(380px) rotateX(72deg);
+  background: repeating-linear-gradient(90deg, rgba(17,17,20,.16) 0 1px, transparent 1px 64px), repeating-linear-gradient(0deg, rgba(17,17,20,.16) 0 1px, transparent 1px 64px);
+  -webkit-mask: linear-gradient(transparent, #000 30%); mask: linear-gradient(transparent, #000 30%); opacity: 0; animation: rk-fade 1.2s 1.2s ease-out both; }
+#splash.rk.lifted .rk-floor { animation: rk-fade 1.2s 1.2s ease-out both, rk-sink .8s ease-in both; }
+.rk-stage { position: relative; height: var(--ph); aspect-ratio: 304 / 383; margin-bottom: 18vh; }
 .rk-p { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; animation: rk-p-in .8s cubic-bezier(.2,.8,.2,1) both, rk-recoil .4s cubic-bezier(.3,0,.2,1) 1.05s both; }
-/* The I sits behind the P, so at first it is only seen through the counter: it slides up out of the hole, then goes. */
+#splash.rk.lifted .rk-stage { animation: rk-fadeout .5s ease-in both; }
+/* The I: a yellow bar with its red dot, behind the P, so it is first seen through the counter. */
 .rk-i { position: absolute; z-index: 1; left: calc(57.24% - var(--ph) * .045); top: calc(33.94% - var(--ph) * .13); width: calc(var(--ph) * .09); height: calc(var(--ph) * .26);
-  border-radius: 999px; background: #FAC800; transform-origin: 50% 50%; opacity: 0; animation: rk-fly 1.75s .75s both; }
+  border-radius: 999px; background: #FAC800; opacity: 0; animation: rk-fly 1.75s .75s both; }
+.rk-i::before, .rk-hop::before { content: ''; position: absolute; left: 50%; bottom: calc(100% + 18%); width: 120%; aspect-ratio: 1; translate: -50% 0; border-radius: 50%; background: #E22622; }
 .rk-trail { position: absolute; left: 22%; right: 22%; top: 92%; height: 180%; border-radius: 0 0 999px 999px; background: linear-gradient(rgba(250,200,0,.7), rgba(250,200,0,0)); opacity: 0; animation: rk-trail 1.75s .75s both; }
 .rk-word { position: absolute; left: 0; right: -60%; top: calc(100% + var(--ph) * .1); font: 600 calc(var(--ph) * .15)/1 'Plus Jakarta Sans', system-ui, sans-serif; letter-spacing: .08em; color: #3A3A42; white-space: nowrap; animation: rk-p-in .8s .3s cubic-bezier(.2,.8,.2,1) both; }
 .rk-word .gap { animation: rk-gone .4s .95s both; }
-.rk-word .pr { animation: rk-gone .3s 2.5s both; }
-/* "Ohhhhh!": when the I lands, the O runs left and each h is left behind as it passes. */
-.rk-ow { position: relative; display: inline-block; }
-.rk-o { display: inline-block; animation: rk-run .6s 2.5s cubic-bezier(.3,.1,.2,1) both; }
-.rk-oh { position: absolute; right: 0; top: 0; display: flex; white-space: nowrap; }
-.rk-oh i { font-style: normal; display: inline-block; width: .62em; text-align: center; opacity: 0; animation: rk-drop .18s calc(2.52s + var(--k) * .1s) ease-out both; }
-.rk-oh i:last-child { width: .42em; }
-.rk-hit { position: absolute; left: calc(50% + var(--land)); bottom: 0; width: 40px; height: 40px; margin-left: -20px; margin-bottom: -20px; border-radius: 50%; border: 1.5px solid rgba(17,17,20,.35); opacity: 0; animation: rk-hit .9s 2.48s cubic-bezier(.1,.7,.2,1) both; }
-.rk-sea { position: absolute; inset: -8vh -10vw -12vh; z-index: 5; background: #FFFFFF; filter: drop-shadow(0 -1px 0 #E4E4E0); transform-origin: calc(50% + var(--land)) 100%; transform: translateY(140%); animation: rk-sea 1.05s 3.25s cubic-bezier(.25,.7,.15,1) both; }
-.rk-crest { position: absolute; left: 0; right: 0; top: -58px; height: 60px; background: #FFFFFF;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V34C120 34 150 6 270 6S450 46 540 30 660 20 720 34V60Z'/%3E%3C/svg%3E") 0 0 / 720px 60px repeat-x; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 720 60' preserveAspectRatio='none'%3E%3Cpath d='M0 60V34C120 34 150 6 270 6S450 46 540 30 660 20 720 34V60Z'/%3E%3C/svg%3E") 0 0 / 720px 60px repeat-x; animation: rk-roll 1.05s 3.25s cubic-bezier(.3,0,.3,1) both; }
+.rk-ground { position: absolute; inset: 0; pointer-events: none; }
+.rk-hop { position: absolute; left: 0; top: 0; width: 10px; height: 30px; border-radius: 999px; background: #FAC800; transform-origin: 50% 100%; }
+.rk-l, .rk-row { font: 800 1em/1 'Plus Jakarta Sans', system-ui, sans-serif; letter-spacing: -.01em; color: #111114; }
+.rk-l { position: absolute; left: 0; top: 0; opacity: 0; transform-origin: 50% 100%; white-space: nowrap; }
+.rk-row { position: absolute; left: 50%; top: 52%; translate: -50% -50%; display: flex; gap: .02em; visibility: hidden; }
 @keyframes rk-p-in { from { opacity: 0; transform: translateY(10px) scale(.96); } to { opacity: 1; transform: none; } }
 @keyframes rk-recoil { 40% { transform: translateY(2px); } }
 @keyframes rk-gone { to { color: transparent; } }
-@keyframes rk-run { to { transform: translateX(-3.52em); } }
-@keyframes rk-drop { from { opacity: 0; transform: translateY(-.15em); } to { opacity: 1; transform: none; } }
+@keyframes rk-fade { to { opacity: 1; } }
+@keyframes rk-sink { to { opacity: 0; transform: perspective(380px) rotateX(80deg) translateY(30%); } }
+@keyframes rk-fadeout { to { opacity: 0; transform: scale(.9); } }
 @keyframes rk-fly {
   0% { opacity: 0; transform: translateY(40%) scale(.6); animation-timing-function: cubic-bezier(.3,0,.4,1); }
   9% { opacity: 1; transform: translateY(-30%) scale(1); animation-timing-function: cubic-bezier(.55,0,.9,.4); }
   44% { opacity: 1; transform: translateY(-95vh) scale(1.05, 1.25); }
-  45% { opacity: 0; transform: translate(var(--land), -110vh) rotate(180deg) scale(.55); animation-timing-function: linear; }
-  50% { opacity: .35; animation-timing-function: cubic-bezier(.5,0,.95,.5); }
-  100% { opacity: .35; transform: translate(var(--land), 72vh) rotate(180deg) scale(.55); } }
-@keyframes rk-trail { 0%, 7% { opacity: 0; } 12%, 40% { opacity: 1; } 45% { opacity: 0; } 55%, 98% { opacity: .9; } 100% { opacity: 0; } }
-@keyframes rk-hit { from { opacity: 1; transform: scale(.3); } to { opacity: 0; transform: scale(4); } }
-@keyframes rk-sea { from { transform: translateY(140%) skewY(-4deg); } 75% { transform: translateY(-1%) skewY(.5deg); } to { transform: none; } }
-@keyframes rk-roll { from { -webkit-mask-position: 0 0; mask-position: 0 0; } to { -webkit-mask-position: -720px 0; mask-position: -720px 0; } }
+  45% { opacity: 0; transform: translate(var(--landx, 0px), -110vh) scale(.35); animation-timing-function: linear; }
+  50% { opacity: 1; animation-timing-function: cubic-bezier(.5,0,.95,.5); }
+  100% { opacity: 1; transform: translate(var(--landx, 0px), var(--landy, 40vh)) scale(.35); } }
+@keyframes rk-trail { 0%, 7% { opacity: 0; } 12%, 40% { opacity: 1; } 45%, 100% { opacity: 0; } }
 @keyframes rk-out { to { opacity: 0; visibility: hidden; } }
 
 /* ---------- the guide, grown up: smaller, flat, and it walks to what matters when you pause ---------- */
@@ -1665,3 +1664,188 @@ dialog.keys::backdrop, dialog.palette::backdrop, .adprev::backdrop { backdrop-fi
 /* No cartoon face: the guide is the P mark itself; its star does the expressing (orbits while thinking, flies to point). */
 .bd-face, .bd-hat, .bd-glasses, .bd-neck { display: none !important; }
 .bd-bubble { min-width: min(260px, 50vw); }
+
+/* ---------- the build page: the deck assembled in front of you, from what the build is really finding ---------- */
+.asm { padding: 22px 22px 14px; margin-bottom: 16px; overflow: hidden; }
+.asm-stage { position: relative; height: clamp(220px, 34vw, 340px); display: grid; place-items: center; padding-right: 130px; }
+.asm-slide { position: relative; z-index: 2; width: min(64%, 500px); aspect-ratio: 16 / 9; background: #fff; border: 1px solid var(--line-2, #CFCFCA); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow-lift); transition: transform .6s cubic-bezier(.3,0,.2,1); }
+.asm-band { position: absolute; left: 0; top: 0; bottom: 0; width: 34%; background: var(--chip, #F0F0ED); transition: background .6s; }
+.asm-band::after { content: ''; position: absolute; left: 12%; bottom: 12%; width: 30%; height: 4px; border-radius: 2px; background: var(--c1, transparent); transition: background .6s; }
+.asm-logo { position: absolute; left: 6%; top: 9%; width: 22%; height: 18%; display: grid; place-items: center start; }
+.asm-logo img { max-width: 100%; max-height: 100%; object-fit: contain; background: rgba(255,255,255,.92); border-radius: 3px; padding: 2px 4px; }
+.asm-logo b { font-size: 12px; color: #fff; mix-blend-mode: difference; }
+.asm-head { position: absolute; left: 40%; right: 7%; top: 14%; display: grid; gap: 7px; }
+.asm-head i { display: block; height: 11px; border-radius: 3px; background: var(--ink, #111114); width: 0; transition: width 1.4s cubic-bezier(.3,0,.2,1); }
+.asm-head i + i { height: 7px; background: var(--faint, #8A8A92); transition-delay: .5s; }
+.asm[data-step="2"] .asm-head i, .asm[data-step="3"] .asm-head i, .asm[data-step="4"] .asm-head i, .asm[data-step="5"] .asm-head i, .asm[data-step="done"] .asm-head i { width: 88%; }
+.asm[data-step="2"] .asm-head i + i, .asm[data-step="3"] .asm-head i + i, .asm[data-step="4"] .asm-head i + i, .asm[data-step="5"] .asm-head i + i, .asm[data-step="done"] .asm-head i + i { width: 60%; }
+.asm-body { position: absolute; left: 40%; right: 7%; top: 40%; display: grid; gap: 5px; }
+.asm-body i { display: block; height: 4px; border-radius: 2px; background: var(--line-2, #CFCFCA); width: var(--w); animation: asm-grow .5s ease-out both; }
+.asm-pics { position: absolute; left: 40%; right: 7%; bottom: 9%; display: flex; gap: 5px; height: 18%; }
+.asm-pics i { flex: 1; border-radius: 3px; background: linear-gradient(135deg, var(--line, #E4E4E0), var(--line-2, #CFCFCA)); animation: asm-grow .5s ease-out both; }
+/* Building the deck: the slide gains slides behind it, fanned, then squared up when it is done. */
+.asm-stack { position: absolute; z-index: 1; width: min(64%, 500px); aspect-ratio: 16 / 9; }
+.asm-stack i { position: absolute; inset: 0; background: #fff; border: 1px solid var(--line-2, #CFCFCA); border-radius: 6px; opacity: 0; transition: transform .7s cubic-bezier(.3,0,.2,1), opacity .4s; }
+.asm[data-step="3"] .asm-stack i, .asm[data-step="4"] .asm-stack i, .asm[data-step="5"] .asm-stack i { opacity: 1; }
+.asm[data-step="3"] .asm-stack i:nth-child(1), .asm[data-step="4"] .asm-stack i:nth-child(1) { transform: translate(14px, -10px) rotate(2deg); }
+.asm[data-step="3"] .asm-stack i:nth-child(2), .asm[data-step="4"] .asm-stack i:nth-child(2) { transform: translate(26px, -18px) rotate(4deg); }
+.asm[data-step="3"] .asm-stack i:nth-child(3), .asm[data-step="4"] .asm-stack i:nth-child(3) { transform: translate(-14px, -8px) rotate(-2.5deg); }
+.asm[data-step="3"] .asm-stack i:nth-child(4), .asm[data-step="4"] .asm-stack i:nth-child(4) { transform: translate(-24px, -16px) rotate(-4.5deg); }
+.asm[data-step="done"] .asm-stack i { opacity: 1; transform: translate(4px, -4px); }
+/* Printing: the three documents slide out to the right. */
+.asm-docs { position: absolute; right: 0; top: 50%; translate: 0 -50%; display: grid; gap: 8px; z-index: 3; }
+.asm-doc { font-size: 12px; padding: 8px 12px; background: #fff; border: 1px solid var(--line-2, #CFCFCA); border-left: 3px solid var(--accent, #2656D9); border-radius: 4px; opacity: 0; transform: translateX(-30px); transition: opacity .4s, transform .6s cubic-bezier(.3,0,.2,1); }
+.asm[data-step="4"] .asm-doc, .asm[data-step="5"] .asm-doc, .asm[data-step="done"] .asm-doc { opacity: 1; transform: none; }
+.asm-doc:nth-child(2) { transition-delay: .25s; } .asm-doc:nth-child(3) { transition-delay: .5s; }
+.asm[data-step="done"] .asm-slide { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--green, #1F7A4D), var(--shadow-lift); }
+/* What flies in: a search, a source, a photo, a color. */
+.asm-fly { position: absolute; z-index: 4; pointer-events: none; }
+.asm-chip { font-size: 13px; white-space: nowrap; padding: 4px 9px; border-radius: 4px; background: #fff; border: 1px solid var(--line-2, #CFCFCA); color: var(--ink); box-shadow: var(--shadow); }
+.asm-chip.src { color: var(--link, #2656D9); }
+.asm-chip.pic { background: var(--chip, #F0F0ED); }
+.asm-sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; box-shadow: var(--shadow); }
+.asm-cap { margin: 12px 0 0; font-size: 14px; color: var(--muted); min-height: 1.4em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes asm-grow { from { transform: scaleX(0); transform-origin: 0 50%; } }
+@media (max-width: 760px) { .asm-docs { display: none; } }
+:root[data-motion="off"] .asm * { transition: none !important; animation: none !important; }
+.asm-stage { transition: padding .6s cubic-bezier(.3,0,.2,1); }
+.asm[data-step="4"] .asm-stage, .asm[data-step="5"] .asm-stage, .asm[data-step="done"] .asm-stage { padding-right: 150px; }
+@media (max-width: 760px) { .asm[data-step="4"] .asm-stage, .asm[data-step="5"] .asm-stage, .asm[data-step="done"] .asm-stage { padding-right: 0; } }
+.asm[data-step="4"] .asm-slide, .asm[data-step="4"] .asm-stack, .asm[data-step="5"] .asm-slide, .asm[data-step="5"] .asm-stack, .asm[data-step="done"] .asm-slide, .asm[data-step="done"] .asm-stack { translate: -70px 0; transition: translate .6s cubic-bezier(.3,0,.2,1), transform .7s; }
+
+/* ---------- audit fixes (0.37) ---------- */
+/* The bar under the form is solid, so scrolled fields never show through its text. */
+.bar, .newgrid .bar { background: var(--ground) !important; z-index: 3; }
+/* The key glyph is one color, the text's: color is reserved for signals. */
+:root[data-theme="studio"] .kg [fill]:not([fill="none"]) { fill: currentColor; }
+:root[data-theme="studio"] .kg [stroke] { stroke: currentColor; }
+/* Close buttons large enough to hit: 32px. */
+.bd-hush { width: 32px; height: 32px; right: 2px; top: 2px; font-size: 20px; }
+/* All 41 logo palettes show at once: no box-in-a-page scroller that cuts the last row in half. */
+.logopick .logos { max-height: none; overflow: visible; }
+.morelooks { margin: 6px 0 18px; border-top: 1px solid var(--line); padding-top: 12px; }
+.morelooks > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: baseline; gap: 10px; padding: 6px 0; }
+.morelooks > summary::before { content: '+'; width: 1em; color: var(--muted); }
+.morelooks[open] > summary::before { content: '−'; }
+.asm[data-step="4"] .asm-slide, .asm[data-step="5"] .asm-slide, .asm[data-step="done"] .asm-slide, .asm[data-step="4"] .asm-stack, .asm[data-step="5"] .asm-stack, .asm[data-step="done"] .asm-stack { translate: -64px 0; }
+.asm-stack { transition: translate .6s cubic-bezier(.3,0,.2,1); } .asm-slide { transition: transform .6s cubic-bezier(.3,0,.2,1), translate .6s cubic-bezier(.3,0,.2,1); }
+
+/* ---------- audit fixes (0.37.0) ---------- */
+/* The guide's bubble, at home in the rail, opens upward inside the rail: it never covers the page you are working on. */
+.buddy:not(.roam) .bd-bubble { left: -8px !important; right: auto !important; bottom: 100px !important; top: auto !important; width: 214px !important; min-width: 0 !important; max-width: 214px !important; border-radius: 12px 12px 12px 3px; transform-origin: 20% 100%; }
+.bd-text { font-size: 15px; }
+/* Larger text is a zoom, so layouts must fold sooner at Larger and Largest. */
+@media (max-width: 1500px) { :root[data-size="large"] .newgrid, :root[data-size="xl"] .newgrid { grid-template-columns: minmax(0, 1fr); } :root[data-size="large"] .newgrid aside, :root[data-size="xl"] .newgrid aside { position: static; order: -1; max-width: 560px; } }
+/* Welcome, in Studio: paper and ink like the rest of the app. No rainbow arcs, no dot screen, no colored labels. */
+:root[data-theme="studio"] .welcome { background: var(--ground); color: var(--ink); }
+:root[data-theme="studio"] .welcome .in > svg.wl-bridge, :root[data-theme="studio"] .welcome .plate { display: none !important; }
+:root[data-theme="studio"] .welcome h1 { color: var(--ink); }
+:root[data-theme="studio"] .welcome .lead, :root[data-theme="studio"] .welcome p { color: var(--muted); }
+:root[data-theme="studio"] .welcome .wl-eyebrow { color: var(--muted); }
+:root[data-theme="studio"] .welcome .steps3 em { color: var(--muted) !important; font-style: normal; }
+.wl-eyebrow { color: #F7C400; }
+/* Settings sits on the same left edge as every other page. */
+:root[data-theme="studio"] main#view > .wrap.narrow { margin-left: 0; }
+:root[data-theme="studio"] .welcome .steps3 div { background: var(--card); border: 1px solid var(--line); color: var(--ink); }
+:root[data-theme="studio"] .welcome .steps3 span { color: var(--muted); }
+.asm[data-step="4"] .asm-slide, .asm[data-step="4"] .asm-stack, .asm[data-step="5"] .asm-slide, .asm[data-step="5"] .asm-stack, .asm[data-step="done"] .asm-stack { translate: -14% 0; }
+.asm[data-step="done"] .asm-slide { translate: -14% 0; }
+.asm-slide, .asm-stack { transition: transform .6s cubic-bezier(.3,0,.2,1), translate .6s cubic-bezier(.3,0,.2,1), box-shadow .4s; }
+
+/* ---------- the catalogue: every kit numbered like a release, and each sleeve its own black-and-white interference ---------- */
+.kitcard .catno { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; color: var(--muted); font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+.cardback.sleeve { position: absolute; inset: 0; display: grid; place-items: end start; background: #fff; overflow: hidden; }
+.cardback.sleeve .opart { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cardback.sleeve b { position: relative; margin: 10px; padding: 4px 8px; background: #fff; color: #111114; font-size: 15px; letter-spacing: .02em; }
+.sleeve-empty { position: relative; width: 220px; aspect-ratio: 1; margin: 0 auto 18px; border: 1px solid var(--line-2, #CFCFCA); overflow: hidden; }
+.sleeve-empty .opart { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sleeve-empty span { position: absolute; left: 10px; bottom: 10px; padding: 3px 7px; background: #fff; color: #111114; font-size: 12px; font-weight: 600; letter-spacing: .04em; }
+.asm-stage::before { content: ''; position: absolute; inset: -20px; z-index: 0; opacity: .05; background: repeating-linear-gradient(87deg, #111114 0 3px, transparent 3px 8px), repeating-linear-gradient(91deg, #111114 0 3px, transparent 3px 8px); }
+
+/* ---------- fixes from the layout audit ---------- */
+/* The form: a label never sits on the field above it. */
+.grid2 + .field, .field + .grid2, .grid2 + .grid2 { margin-top: 16px; }
+/* Phones: the guide's bubble and panel stay inside the screen, and it never sits on the form. */
+@media (max-width: 760px) {
+  .buddy { left: auto !important; right: 10px; bottom: 12px; scale: .8; }
+  .buddy .bd-bubble { position: fixed; left: 12px !important; right: 12px !important; bottom: 96px !important; width: auto !important; max-width: none !important; min-width: 0; }
+  .buddy .bd-panel { position: fixed; left: 8px; right: 8px; bottom: 96px; width: auto; }
+  main#view { padding-bottom: 110px; }
+  .rail nav a { padding-top: 10px; padding-bottom: 10px; min-height: 40px; }
+}
+/* Phones: the guide's bubble and panel span the screen instead of hanging off its edge. */
+@media (max-width: 640px) {
+  .bd-bubble { position: fixed; left: 12px !important; right: 12px !important; bottom: 116px !important; top: auto !important; width: auto !important; max-width: none !important; min-width: 0; }
+  .bd-panel { position: fixed; left: 12px; right: 12px; bottom: 116px; width: auto; max-height: calc(100vh - 160px); }
+}
+.th-name { white-space: normal !important; text-overflow: clip !important; overflow: visible !important; }
+
+/* ---------- from the 2026-11-18 design critique ---------- */
+/* Color is a signal, so the guide rests in ink and takes its colors only when it is talking, listening, open or walking
+   to show you something. At rest the page's one blue action is the loudest thing on screen. */
+:root[data-theme="studio"] .buddy .bd-p { filter: grayscale(1) contrast(1.1); opacity: .55; transition: filter .35s, opacity .35s; }
+:root[data-theme="studio"] .buddy:is(.talking, .open, .roam, .hf, .pointing, :hover, :focus-within) .bd-p,
+:root[data-theme="studio"] .buddy:has(.bd-bubble:not([hidden])) .bd-p,
+:root[data-theme="studio"] .buddy[data-mood="think"] .bd-p, :root[data-theme="studio"] .buddy[data-mood="listen"] .bd-p { filter: none; opacity: 1; }
+/* One blue action per screen: the rail's New prospect is a quiet outline; the page's own button carries the blue. */
+:root[data-theme="studio"] .rail .new { background: var(--card) !important; color: var(--ink) !important; border: 1px solid var(--line-2) !important; }
+:root[data-theme="studio"] .rail .new:hover { background: var(--hover) !important; }
+/* No monospace for words: the version and badges are set in the one typeface. */
+:root[data-theme="studio"] .rail .foot, :root[data-theme="studio"] .chip, :root[data-theme="studio"] .co-inuse { font-family: var(--body, 'Plus Jakarta Sans'), system-ui, sans-serif; letter-spacing: 0; }
+
+/* ---------- Compare: the side-by-side, as a deck you can scroll, present or print ---------- */
+.cmp-status { min-height: 1.5em; margin: 16px 0 8px; color: var(--muted); font-size: 15px; }
+.cmp-status b { color: var(--ink); font-variant-numeric: tabular-nums; margin-right: 6px; }
+.cmp-host > .actions { margin: 6px 0 14px; }
+.cmp-deck { display: grid; gap: 18px; }
+.cmp-slide { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: clamp(20px, 3.4vw, 44px); aspect-ratio: 16 / 9; display: flex; flex-direction: column; gap: 14px; overflow: auto; }
+.cmp-slide h2 { font-size: clamp(26px, 3.6vw, 48px); line-height: 1.05; margin: 0; letter-spacing: -.02em; }
+.cmp-slide h3 { font-size: clamp(18px, 2vw, 26px); margin: 0; }
+.cmp-slide.cover { justify-content: flex-end; background: #fff linear-gradient(var(--line), var(--line)) no-repeat 0 38% / 100% 1px; }
+.cmp-no { margin: 0 0 auto; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cmp-items { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+.cmp-items div { display: flex; gap: 10px; align-items: baseline; font-size: clamp(15px, 1.5vw, 20px); font-weight: 600; }
+.cmp-items b { width: 1.6em; height: 1.6em; border-radius: 50%; display: inline-grid; place-items: center; background: var(--ink); color: #fff; font-size: .75em; flex: none; }
+.cmp-sub { margin: 0; color: var(--muted); }
+.cmp-table { width: 100%; border-collapse: collapse; font-size: clamp(14px, 1.25vw, 17px); table-layout: fixed; }
+.cmp-table th, .cmp-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.cmp-table thead th { font-weight: 700; border-bottom: 2px solid var(--ink); }
+.cmp-table .cmp-k { width: 26%; font-weight: 600; color: var(--muted); }
+.cmp-table td { font-variant-numeric: tabular-nums; }
+/* The best value in a row: the one yellow mark (yellow means selected), never color alone: the word "best" is read out. */
+.cmp-table td.cmp-best { font-weight: 700; box-shadow: inset 0 -3px 0 var(--yellow, #FAC800); }
+.cmp-table td.cmp-nf { color: var(--faint); }
+.cmp-table td.cmp-wait { background: linear-gradient(90deg, var(--chip) 0 30%, #fff 50%, var(--chip) 70%) 0 0 / 300% 100%; animation: cmp-shim 1.6s linear infinite; }
+.cmp-table td.cmp-in { animation: cmp-in .35s ease-out both; }
+@keyframes cmp-shim { to { background-position: -150% 0; } }
+@keyframes cmp-in { from { opacity: 0; transform: translateY(4px); } }
+.cmp-slide.cmp-wait h2 { color: var(--muted); }
+.cmp-verdicts { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.cmp-verdicts li { display: grid; grid-template-columns: minmax(120px, 22%) 1fr; gap: 2px 16px; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.cmp-verdicts span { color: var(--muted); font-weight: 600; grid-row: span 2; }
+.cmp-verdicts p { margin: 0; color: var(--ink-2); }
+.cmp-summary { margin: auto 0 0; font-size: clamp(16px, 1.5vw, 20px); border-left: 3px solid var(--accent); padding-left: 14px; }
+.cmp-sources { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; font-size: 14px; }
+.cmp-sources small { display: block; color: var(--muted); overflow-wrap: anywhere; }
+.cmp-list { list-style: none; padding: 0; display: grid; gap: 8px; }
+.cmp-list li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+/* Presenting: one slide at a time, full screen. */
+.cmp-show { position: fixed; inset: 0; z-index: 9000; background: #F5F5F3; display: grid; grid-template-rows: 1fr auto; padding: 3vh 4vw 2vh; outline: none; }
+.cmp-stage { display: grid; place-items: center; min-height: 0; }
+.cmp-stage .cmp-slide { width: min(100%, calc((100vh - 120px) * 16 / 9)); }
+.cmp-nav { display: flex; justify-content: center; align-items: center; gap: 12px; padding-top: 12px; }
+.cmp-count { min-width: 6em; text-align: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+:root:has(.cmp-show) .buddy { display: none; }
+@media print { .cmp-printing body > *:not(main), .cmp-printing #view > .wrap > *:not(.cmp-host), .cmp-printing .cmp-host > .actions { display: none !important; }
+  .cmp-printing .cmp-slide { break-after: page; border: 0; aspect-ratio: auto; min-height: 90vh; } }
+@media (max-width: 640px) { .cmp-slide { aspect-ratio: auto; } .cmp-table .cmp-k { width: 34%; } .cmp-verdicts li { grid-template-columns: 1fr; } }
+:root[data-motion="off"] .cmp-table td { animation: none !important; }
+.cmp-slide { text-align: left; }
+.cmp-slide.cover h2 { text-align: left; }
+.card .bar { flex-wrap: wrap; row-gap: 8px; }
+/* A scaled guide traps its fixed bubble inside it; on phones it is sized without scale so the bubble can span the screen. */
+@media (max-width: 640px) { .buddy { scale: none !important; } .bd-body { scale: .5; } }
+.cmp-table th, .cmp-table td { overflow-wrap: break-word; hyphens: auto; }
+.cmp-show .cmp-table { font-size: clamp(16px, 2vw, 28px); }
+.cmp-show .cmp-slide h3 { font-size: clamp(22px, 2.8vw, 40px); }
+@media (max-width: 640px) { .cmp-table { font-size: 13px; } .cmp-table th, .cmp-table td { padding: 8px 5px; } .cmp-show { padding: 2vh 3vw; } }

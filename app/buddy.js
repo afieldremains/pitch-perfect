@@ -108,6 +108,10 @@
       ['Decks, ads and brand kits are written for the company marked In use.'],
       ['Real results in Proof make decks stronger. I never invent results.']
     ],
+    compare: () => [
+      ['Name what they are choosing between and tick what matters to them. The deck appears in seconds and fills in as I research.', { point: '#cmp-what' }],
+      ['Say it instead: click the mic on me and say "Compare the RAV4, CR-V and CX-50 on price and mileage."']
+    ],
     settings: () => [
       ['If I talk too much, set me to Quiet. I will only speak when you click me.', { point: '.guidepick' }]
     ]
@@ -245,12 +249,14 @@
     const [kits, clients] = await Promise.all([S.kits().catch(() => []), S.crmList().catch(() => [])]);
     const next = (p) => (p.tasks || []).filter((k) => !k.done).sort((a, b) => (a.due || '9').localeCompare(b.due || '9'))[0];
     return { today: new Date().toLocaleDateString('en-CA') + ' (' + new Date().toLocaleDateString('en-US', { weekday: 'long' }) + ')', page: page(), title: title(),
-      kits: kits.map((g) => g.name + (g.latest && g.latest.city ? ' (' + g.latest.city + ')' : '')),
+      kits: (() => { const c = typeof catalogue === 'function' ? catalogue(kits) : new Map(); return kits.map((g) => (c.get(g.name) ? c.get(g.name) + ' ' : '') + g.name + (g.latest && g.latest.city ? ' (' + g.latest.city + ')' : '')); })(),
       clients: clients.map((p) => { const k = next(p); return p.name + ' [' + p.stage + (p.city ? ', ' + p.city : '') + (k ? ', next: ' + k.text + (k.due ? ' on ' + k.due : '') : '') + ']'; }),
       palettes: typeof LOGO_SCHEMES !== 'undefined' ? LOGO_SCHEMES.map((x) => x.name) : [],
       screen: ((document.getElementById('view') || {}).innerText || '').replace(/\s+\n/g, '\n').slice(0, 2500) };
   }
-  const near = (list, name, key) => { const n = String(name || '').toLowerCase().trim(); return list.find((x) => String(x[key]).toLowerCase() === n) || list.find((x) => String(x[key]).toLowerCase().includes(n) || n.includes(String(x[key]).toLowerCase())); };
+  // "PRIO 014", "14" or "number 14" finds the kit with that catalogue number.
+  const byCat = (list, name) => { const m = String(name || '').match(/(\d{1,4})\s*$/); if (!m || typeof catalogue !== 'function' || !list[0] || !list[0].versions) return null; const want = 'PRIO ' + m[1].padStart(3, '0'), c = catalogue(list); return list.find((g) => c.get(g.name) === want) || null; };
+  const near = (list, name, key) => { const hit = byCat(list, name); if (hit) return hit; const n = String(name || '').toLowerCase().trim(); return list.find((x) => String(x[key]).toLowerCase() === n) || list.find((x) => String(x[key]).toLowerCase().includes(n) || n.includes(String(x[key]).toLowerCase())); };
   const afterRoute = (fn) => setTimeout(fn, 900);
   const fillSearch = (sel, q) => afterRoute(() => { const i = document.querySelector(sel); if (i) { i.value = q; i.dispatchEvent(new Event('input', { bubbles: true })); i.focus(); } });
   // What each suggested action does. `now` ones run at once; the rest become buttons the user presses.
@@ -267,6 +273,7 @@
         if (a.start) { say('Add your research key in Settings first; then I can build it.', { point: '.rail nav a[data-tab="settings"]' }); return; }
         say('Check the details, then press Build the kit.', { point: b || '#view button.primary' }); }, 1300); } },
     rehearse: { now: true, run: async (a) => { const g = near(await S.kits(), a.name, 'name'); if (!g) return say('I could not find a kit for ' + a.name + '.'); location.hash = 'kit/' + encodeURIComponent(g.latest.dir); setTimeout(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'r' })), 1400); } },
+    compare: { label: (a) => 'Compare ' + (a.items || []).join(', '), run: (a) => { store.set('cmp.draft', { what: (a.items || []).join(', '), priorities: a.priorities || [], notes: a.notes || '' }); if (a.start) store.set('cmp.autostart', true); location.hash = 'compare'; } },
     start_tour: { now: true, run: () => setTimeout(() => window.guideTour(), 300) },
     add_note: { label: (a) => 'Add the note to ' + a.prospect, run: async (a) => { const p = near(await S.crmList(), a.prospect, 'name'); if (!p) return say('I could not find ' + a.prospect + ' in Clients. Add them first.');
       p.notes = p.notes || []; p.notes.push({ kind: 'note', text: a.text, at: new Date().toISOString() }); await S.crmSave(p); toast('Note added to ' + p.name + '.'); } },
@@ -312,7 +319,7 @@
       const btns = [];
       for (const a of r.actions || []) { const A = ACT[a.name]; if (!A) continue; const input = a.input || {};
         // Safe ones run at once; the rest wait for a click, unless the person already said yes out loud or in writing.
-        if (A.now || input.confirmed === true || (a.name === 'build_kit' && input.start === true)) { try { await A.run(input); } catch (e) { /* the reply still shows */ } }
+        if (A.now || input.confirmed === true || ((a.name === 'build_kit' || a.name === 'compare') && input.start === true)) { try { await A.run(input); } catch (e) { /* the reply still shows */ } }
         else { const b = h('button', 'bd-act'); b.type = 'button'; b.textContent = A.label(input); b.onclick = async () => { b.disabled = true; try { await A.run(input); b.textContent = 'Done'; } catch (e) { b.disabled = false; toast(clean(e)); } }; btns.push(b); } }
       const reply = r.reply || (btns.length ? 'Here you go.' : 'Done.');
       entry('it', reply, btns); history.push({ role: 'assistant', text: reply });
@@ -383,6 +390,7 @@
     if (pg === 'new') { const i = v('#view input'); return i && !i.value.trim() ? { el: i, text: 'Type the business name here, or click the mic on me and say it.' } : { el: byText('#view button', /Build the kit/), text: 'When the details look right, build the kit. It takes a few minutes; you can leave this page.' }; }
     if (pg === 'kit') return { el: byText('#view button', /^Rehearse/), text: 'Run it once before the meeting. The talk track and a clock sit beside each slide.' };
     if (pg === 'crm') return { el: v('#c-step') || v('#view h1'), text: 'Anyone without a next step and a date goes cold. Give each client one.' };
+    if (pg === 'compare') { const w = v('#cmp-what'); return w && !w.value.trim() ? { el: w, text: 'Type what they are choosing between, or click the mic on me and say it.' } : { el: byText('#view button', /Make the comparison/), text: 'Ready when you are. The table appears in seconds and fills in while you talk with them.' }; }
     const t = (TIPS[pg] || TIPS.library)()[0]; return t ? { el: t[1] && t[1].point ? v(t[1].point) : null, text: t[0] } : null;
   }
   function moveTo(el) {
@@ -404,6 +412,7 @@
   // ---------- the first time the app opens: a short tour ----------
   const STEPS = [
     ['#nav-new', 'This is PRIO. Every meeting starts here: name a prospect and I research them, then build the deck, the talk track and the leave-behind.'],
+    [null, 'First, make it comfortable to read. Pick a text size; you can change it later in Settings.', 'size'],
     ['.rail nav a[data-tab="library"]', 'Every kit lands in the Library, with its versions.'],
     ['.rail nav a[data-tab="crm"]', 'Clients is your pipeline. Every prospect gets a next step and a date.'],
     ['.rail nav a[data-tab="ads"]', 'Ads and Brand kits make campaigns and identities, for Prio Connect or for a client.'],
@@ -413,10 +422,12 @@
   ];
   const endTour = () => { touring = false; put('guide.toured', true); home(); };
   function tour(i) {
-    touring = true; const [sel, text] = STEPS[i], last = i === STEPS.length - 1, el = sel && document.querySelector(sel);
+    touring = true; const [sel, text, kind] = STEPS[i], last = i === STEPS.length - 1, el = sel && document.querySelector(sel);
+    const size = (v) => () => { try { store.set('ui', Object.assign({}, store.get('ui', {}), { size: v })); applyLook(); } catch (e) { /* the web build may not have it */ } tour(i + 1); };
     if (!(el && moveTo(el))) { gx = gy = 0; buddy.style.removeProperty('--gx'); buddy.style.removeProperty('--gy'); buddy.classList.remove('roam', 'right', 'high'); }
     setTimeout(() => say(text, { point: el || undefined, stay: true, actions: last
       ? [['Try talking', () => { endTour(); askPanel(true); }], ['Done', endTour]]
+      : kind === 'size' ? [['Normal', size('normal')], ['Larger', size('large')], ['Largest', size('xl')]]
       : [['Next', () => tour(i + 1)], ['Skip the tour', endTour]] }), el ? 1100 : 400);
   }
   hush.onclick = () => { if (touring) endTour(); closeBubble(); };

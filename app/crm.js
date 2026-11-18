@@ -85,7 +85,7 @@
           el('button', { class: 'btn primary', type: 'button', onclick: add }, 'Add a prospect'))),
       el('div', { class: 'crm-bar' }, seg, search), body);
     if (!all.length) {
-      body.append(el('div', { class: 'empty crm-empty' }, el('h2', { text: 'Every client starts as a name in this notebook.' }),
+      body.append(el('div', { class: 'empty crm-empty' }, el('h2', { text: 'Every client starts as a name.' }),
         el('p', { class: 'muted', text: loose.length ? 'You have ' + loose.length + ' kit' + (loose.length === 1 ? '' : 's') + ' in your Library. Bring them in as prospects, or add someone new.' : 'Add the people you are meeting, then drag them across the board as the work moves.' }),
         el('div', { class: 'actions' }, loose.length ? el('button', { class: 'btn primary', type: 'button', onclick: fromLibrary }, 'Add ' + loose.length + ' from the Library') : null, el('button', { class: loose.length ? 'btn ghost' : 'btn primary', type: 'button', onclick: add }, 'Add a prospect'))));
       return;
@@ -268,7 +268,7 @@
         text.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) addIt(e); });
         const items = p.notes.slice().sort((a, b) => b.at.localeCompare(a.at));
         return el('section', { class: 'card crm-notes' }, el('h2', { text: 'Notes and activity' }),
-          el('form', { class: 'crm-addrow', onsubmit: addIt }, seg, text, el('div', { class: 'actions' }, el('button', { class: 'btn dark sm', type: 'submit' }, 'Add to the notebook'), el('span', { class: 'muted small', text: 'Ctrl+Enter adds it.' }))),
+          el('form', { class: 'crm-addrow', onsubmit: addIt }, seg, text, el('div', { class: 'actions' }, el('button', { class: 'btn dark sm', type: 'submit' }, 'Add the note'), el('span', { class: 'muted small', text: 'Ctrl+Enter adds it.' }))),
           items.length ? el('ol', { class: 'crm-timeline' }, ...items.map((n) => el('li', { class: 'k-' + n.kind },
             el('div', { class: 'crm-tl-head' }, el('b', { text: (ACTS.find((a) => a[0] === n.kind) || ACTS[0])[1] }), el('span', { class: 'muted small', text: fmtWhen(n.at) }),
               el('button', { class: 'linkish small', type: 'button', 'aria-label': 'Delete this note', onclick: async () => { p.notes = p.notes.filter((x) => x !== n); await commit(); redraw(); } }, 'Delete')),

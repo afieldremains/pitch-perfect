@@ -13,7 +13,7 @@
   .rail .label { display: flex !important; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px !important; }
   .rail .brand { margin: 0 !important; }
   .rail .new { margin: 0 !important; padding: 8px 12px !important; font-size: 14px !important; }
-  .rail nav { display: flex !important; flex-direction: row !important; gap: 4px !important; overflow-x: auto; width: 100%; scrollbar-width: none; }
+  .rail nav { display: flex !important; flex-direction: row !important; flex-wrap: wrap; gap: 4px !important; width: 100%; }
   .rail nav a { white-space: nowrap; padding: 8px 10px !important; }
   .rail .foot, .rail .dice { display: none !important; }
   main { margin: 6px !important; border-radius: 6px 16px 16px 6px !important; min-height: 70dvh; overflow: visible !important; }

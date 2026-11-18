@@ -22,6 +22,7 @@
 <script src="crm.js" defer></script>
 <script src="company.js" defer></script>
 <script src="make.js" defer></script>
+<script src="compare.js" defer></script>
 <script src="buddy.js" defer></script>
 </head>
 <body>
@@ -31,6 +32,7 @@
   <a href="#new" class="new" id="nav-new">+ New prospect</a>
   <nav aria-label="Main">
     <a href="#library" data-tab="library">Library <span class="count" id="kit-count"></span></a>
+    <a href="#compare" data-tab="compare">Compare</a>
     <a href="#crm" data-tab="crm">Clients <span class="count due" id="crm-due" title="Follow-ups due today or late"></span></a>
     <a href="#ads" data-tab="ads">Ads</a>
     <a href="#brand" data-tab="brand">Brand kits</a>
@@ -46,18 +48,18 @@
 <div id="curl" aria-hidden="true"></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="folio" aria-hidden="true"></div>
-<!-- Opening, kept quiet: a small P on paper. The I of PRIO slips up out of the P's counter like a rocket, arcs away and
-     falls faintly behind it. When it lands the O runs off to the left, leaving a trail of h's ("Ohhhhh!"), and the app
-     rises in as a white swell and fills the screen. Any key or click skips
-     it; Calm skips it; Off shows nothing. -->
+<!-- Opening: a small P on paper over a receding line grid. The I of PRIO (yellow, with a red dot) shoots up out of the
+     P's counter and lands far back on the ground; it skips forward toward you, leaving C O N N E C T behind it, and the word
+     stands up and fills the screen as the app arrives (renderer/intro.js). Any key or click skips it; Calm skips it; Off
+     shows nothing. -->
 <div id="splash" class="rk" aria-hidden="true">
+  <div class="rk-floor"></div>
   <div class="rk-stage">
     <div class="rk-i"><span class="rk-trail"></span></div>
     <svg class="rk-p" viewBox="0 0 304 383" aria-hidden="true"><rect width="87" height="383" rx="43.5" fill="#2656D9"/><path fill-rule="evenodd" fill="#E22622" d="M174 0a130 130 0 1 0 0 260a130 130 0 1 0 0-260ZM174 79a51 51 0 1 1 0 102a51 51 0 1 1 0-102Z"/><path fill="#FFFFFF" d="M63 96C66 119 74 127 97 130C74 133 66 141 63 164C60 141 52 133 29 130C52 127 60 119 63 96Z"/></svg>
-    <div class="rk-word" aria-hidden="true"><span class="pr">PR</span><span class="gap">I</span><span class="rk-ow"><span class="rk-o">O</span><span class="rk-oh"><i style="--k:5">h</i><i style="--k:4">h</i><i style="--k:3">h</i><i style="--k:2">h</i><i style="--k:1">h</i><i style="--k:0">!</i></span></span></div>
+    <div class="rk-word" aria-hidden="true">PR<span class="gap">I</span>O</div>
   </div>
-  <span class="rk-hit"></span>
-  <div class="rk-sea"><span class="rk-crest"></span></div>
 </div>
+<script src="intro.js"></script>
 </body>
 </html>
